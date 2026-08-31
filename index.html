@@ -83,8 +83,8 @@
   <div class="panel" style="padding:.75rem 1.1rem;display:flex;align-items:center;gap:.6rem;flex-wrap:wrap">
     <b style="font-size:.85rem">Time window</b>
     <button class="tf" data-w="4">4 weeks</button>
-    <button class="tf" data-w="13">13 weeks</button>
-    <button class="tf on" data-w="26">26 weeks</button>
+    <button class="tf on" data-w="13">13 weeks</button>
+    <button class="tf" data-w="26">26 weeks</button>
     <span id="win-label" style="color:var(--dim);font-size:.8rem;margin-left:.4rem"></span>
   </div>
 
@@ -404,7 +404,7 @@ function render() {
 }
 
 /* ── share over time ─────────────────────────────────────────────────────── */
-let trendChart, scatterChart, pairedChart, TF = { weeks: 26, measure: 'pct' }, WIN = null;
+let trendChart, scatterChart, pairedChart, TF = { weeks: 13, measure: 'pct' }, WIN = null;
 
 /* Token-share panels, recomputed for whatever window is selected. */
 function renderTokenPanels() {

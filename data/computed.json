@@ -148,6 +148,12 @@
         "key": "meta",
         "tokens": 361784510849,
         "share_pct": 0.048
+      },
+      {
+        "key": "(other attributed vendors)",
+        "tokens": 414923807941,
+        "share_pct": 0.055,
+        "note": "Vendors outside the top 21, each below ~0.05% share, aggregated."
       }
     ],
     "by_model": [
@@ -302,7 +308,15 @@
         "share_pct": 0.31
       }
     ],
-    "exclusion_rule": "Models published under an anonymous or stealth provider (stealth/*, openrouter/ox-*, openrouter/owl-*) are excluded from all share denominators because vendor and licence cannot be established. Their volume is reported above so the effect is visible."
+    "exclusion_rule": "Models published under an anonymous or stealth provider (stealth/*, openrouter/ox-*, openrouter/owl-*) are excluded from all share denominators because vendor and licence cannot be established. Their volume is reported above so the effect is visible.",
+    "reconciliation": {
+      "listed_vendors": 709669426064913,
+      "tail_vendors": 414923807941,
+      "other_row_from_api": 48863160944656,
+      "denominator": 758947510817510,
+      "check": "listed + tail + other == denominator",
+      "sums_exactly": true
+    }
   },
   "open_weight": {
     "buckets": [
