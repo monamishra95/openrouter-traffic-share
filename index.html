@@ -64,6 +64,11 @@
   .fx{background:#0d1117;border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:5px;
       padding:.5rem .8rem;margin:.6rem 0 .9rem;font-size:.78rem;color:var(--dim);font-family:ui-monospace,monospace}
   .fx b{color:var(--txt);font-family:inherit}
+  .attrib{font-size:.82rem;color:var(--dim);margin:0 0 1.25rem;padding:.55rem .9rem;
+          background:var(--panel);border:1px solid var(--line);border-radius:6px}
+  .attrib a{color:var(--accent);text-decoration:none}
+  .attrib a:hover{text-decoration:underline}
+  .attrib .lnk{cursor:pointer;color:var(--accent)}
   code{background:#0d1117;padding:.1rem .35rem;border-radius:3px;font-size:.85em}
 </style>
 </head>
@@ -72,6 +77,11 @@
 
   <h1>Share of Traffic on OpenRouter</h1>
   <p class="sub">What models developers actually run — measured, not estimated. <span id="window-label"></span></p>
+
+  <!-- Provenance strip. Sits above the fold on every tab, and the date is read
+       from the API's own meta.as_of so it advances with each scheduled refresh
+       rather than being written by hand. -->
+  <p class="attrib" id="attrib"></p>
 
   <!-- Caveats render above every chart. AC-3. -->
   <div class="caveat">
@@ -192,7 +202,7 @@
   <section id="sec-method" class="sec">
     <div class="panel">
       <h2>Every formula on this page</h2>
-      <p class="sub">Each figure, the arithmetic behind it, and where the inputs come from. Anything you cannot recompute from this table is a defect — the raw API responses are committed in <code>data/</code> and the implementation is in <code>scripts/compute.py</code>.</p>
+      <p class="sub">Each figure, the arithmetic behind it, and where the inputs come from. The raw API responses are committed in <code>data/</code> and the implementation is in <code>scripts/compute.py</code>.</p>
       <div id="formulas"></div>
     </div>
     <div class="panel">
@@ -212,23 +222,21 @@
   </section>
 
 
-  <p class="src" style="margin-top:2rem">
-    Built with <a href="https://github.com/monamishra95/multi-agent-harness">multi-agent-harness</a>.
-    All figures computed from live APIs and committed to this repository — no hand-entered numbers.
-    <span id="gen-stamp"></span>
-  </p>
 </div>
 
 <script>
 const COLORS = ['#58a6ff','#3fb950','#d29922','#f85149','#a371f7','#39c5cf','#db61a2','#e3b341','#7ee787','#ff7b72','#79c0ff','#ffa657'];
 let DATA = null;
 
-document.querySelectorAll('.tab').forEach(t => t.onclick = () => {
+function goTab(name) {
   document.querySelectorAll('.tab').forEach(x => x.classList.remove('on'));
   document.querySelectorAll('.sec').forEach(x => x.classList.remove('on'));
-  t.classList.add('on');
-  document.getElementById('sec-' + t.dataset.sec).classList.add('on');
-});
+  const btn = document.querySelector(`.tab[data-sec="${name}"]`);
+  if (btn) btn.classList.add('on');
+  const sec = document.getElementById('sec-' + name);
+  if (sec) { sec.classList.add('on'); window.scrollTo({ top: 0, behavior: 'smooth' }); }
+}
+document.querySelectorAll('.tab').forEach(t => t.onclick = () => goTab(t.dataset.sec));
 
 const fmtN = n => n >= 1e12 ? (n/1e12).toFixed(2)+'T' : n >= 1e9 ? (n/1e9).toFixed(1)+'B' : n >= 1e6 ? (n/1e6).toFixed(1)+'M' : n.toLocaleString();
 const fmtUSD = n => n >= 1e6 ? '$'+(n/1e6).toFixed(2)+'M' : n >= 1e3 ? '$'+(n/1e3).toFixed(1)+'k' : '$'+n.toFixed(2);
@@ -297,8 +305,15 @@ function render() {
 
   document.getElementById('window-label').textContent =
     `${ts.window.start} to ${ts.window.end} · ${ts.window.days} days`;
-  document.getElementById('gen-stamp').textContent =
-    'Data as of ' + ((d.generated_from['tokens-daily.json']||{}).as_of || '').slice(0,10) + '.';
+
+  // Date comes from the API's own meta.as_of, carried through the fetch layer,
+  // so it advances on every scheduled refresh without anyone editing the page.
+  const asOf = ((d.generated_from['tokens-daily.json'] || {}).as_of || '').slice(0, 10);
+  document.getElementById('attrib').innerHTML =
+    `Built by Mona's <a href="https://github.com/monamishra95/multi-agent-harness" target="_blank">multi-agent-harness</a>. ` +
+    `All figures computed from live APIs and committed to this repository. ` +
+    `Data as of ${esc(asOf || 'unknown')}. ` +
+    `<span class="lnk" onclick="goTab('method')">See methodology and data fidelity →</span>`;
 
   renderTokenPanels();
 
