@@ -25,5 +25,11 @@ jobs:
       - uses: actions/setup-python@v6
         with:
           python-version: '3.11'
+      # test_compute.py imports fetch_all.py to assert write() against every real
+      # response shape, and fetch_all exits if requests is missing. The job passed
+      # locally where requests was already installed and failed in CI, which is the
+      # difference between "tests pass on my machine" and "tests pass".
+      - name: Install dependencies
+        run: pip install requests
       - name: Golden tests
         run: python tests/test_compute.py
