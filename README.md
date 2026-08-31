@@ -2,7 +2,7 @@
 
 What models developers actually run — measured from OpenRouter's CC BY 4.0 Data API, refreshed daily, with every figure traceable to an API response committed in this repository.
 
-**This is gateway traffic, not market share.** Most enterprise inference goes directly to Anthropic, OpenAI or Google Cloud and never touches a routing gateway. The name of this project is the most important thing about it.
+**This is gateway traffic, not market share.** Most enterprise inference goes directly to Anthropic, OpenAI or Google Cloud and never touches a routing gateway.
 
 ## Run it
 
