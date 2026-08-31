@@ -109,7 +109,7 @@
       <h2>Volume versus value</h2>
       <p class="sub" style="margin-bottom:.5rem">Each dot is a vendor. Horizontal axis is share of tokens routed; vertical axis is share of estimated spend. The diagonal is parity — a vendor sitting on it earns exactly in proportion to the volume it moves. <b>Above the line, a vendor captures more value than volume. Below it, the reverse.</b> Dot size is absolute token volume.</p>
       <div class="chart" style="height:420px"><canvas id="c-scatter"></canvas></div>
-      <div class="fx"><b>x</b> = vendor tokens ÷ (attributed + other) &nbsp;·&nbsp; <b>y</b> = vendor est. USD ÷ total est. USD &nbsp;·&nbsp; <b>ratio</b> = y ÷ x &nbsp;·&nbsp; dot area ∝ absolute tokens</div>
+      <div class="fx"><b>x</b> = vendor tokens ÷ (attributed + other) &nbsp;·&nbsp; <b>y</b> = vendor est. USD ÷ total est. USD &nbsp;·&nbsp; <b>ratio</b> = y ÷ x &nbsp;·&nbsp; dot area ∝ absolute tokens<br><b>Both axes: fixed 90-day window, 2026-06-02 → 2026-08-30.</b> Not affected by the time selector.</div>
       <div class="src" id="scatter-note"></div>
     </div>
 
@@ -545,7 +545,13 @@ function renderTokenPanels() {
   const spendMap = {};
   if (d.estimated_spend) for (const s of d.estimated_spend.by_vendor) spendMap[s.vendor] = s.share_pct;
 
-  const pts = vendors.filter(v => spendMap[v.key] != null)
+  // The scatter compares token share against spend share, so BOTH axes must
+  // cover the same period. Spend cannot be recomputed per window (per-model
+  // weekly volumes are not stored), so the scatter is pinned to the fixed
+  // 90-day window rather than plotting a windowed x against a fixed y — which
+  // would silently mix two periods in one chart and make the ratio meaningless.
+  const scatterVendors = ts.by_vendor.slice(0, 12);
+  const pts = scatterVendors.filter(v => spendMap[v.key] != null)
     .map(v => ({ x: v.share_pct, y: spendMap[v.key], tokens: v.tokens, v: v.key }));
   if (scatterChart) scatterChart.destroy();
   scatterChart = scatter('c-scatter', pts);
@@ -555,8 +561,8 @@ function renderTokenPanels() {
   document.getElementById('scatter-note').innerHTML =
     (above[0] ? `<b>${esc(above[0].v)}</b> captures ${(above[0].y/above[0].x).toFixed(1)}× its share of volume in value — ${above[0].x.toFixed(1)}% of tokens, ${above[0].y.toFixed(1)}% of spend. ` : '') +
     (below[0] ? `<b>${esc(below[0].v)}</b> is the mirror image at ${(below[0].y/below[0].x).toFixed(2)}× — ${below[0].x.toFixed(1)}% of tokens, ${below[0].y.toFixed(1)}% of spend. ` : '') +
-    `<br><b>Token share:</b> ${useWin ? WIN.start+' → '+WIN.end : ts.window.start+' → '+ts.window.end}. ` +
-    `<b>Spend share:</b> full ${ts.window.days}-day window — the per-model volumes needed to recompute spend weekly are not stored, so this axis does not follow the selector.`;
+    `<br><b>Both axes cover the same fixed window: ${ts.window.start} → ${ts.window.end} (${ts.window.days} days).</b> ` +
+    `This chart deliberately does not follow the time selector — spend cannot be recomputed per week from the stored data, and plotting a windowed token share against a fixed spend share would compare two different periods. The selector drives the paired bars and the trend tab below.`;
 
   if (pairedChart) pairedChart.destroy();
   pairedChart = hbar('c-paired', vendors.map(v=>v.key), [
