@@ -78,7 +78,7 @@
     <b>This is one gateway, not the market.</b> These figures describe traffic routed through OpenRouter. Most enterprise inference goes directly to Anthropic, OpenAI or Google Cloud and never appears here. OpenRouter states this themselves: the rankings <em>"describe traffic routed through OpenRouter, not the whole market and not usage on a model provider's own API."</em>
   </div>
   <div class="caveat">
-    <b>Tokens from different vendors are not directly comparable.</b> Each provider counts with its own tokenizer, so a token in one row is not the same unit as a token in another. Summing across vendors adds unlike quantities — which is what every "AI market share by tokens" figure silently does. Request share, in the second tab, is the more comparable measure.
+    <b>Tokens from different vendors are not directly comparable.</b> Each provider counts with its own tokenizer, so a token in one row is not the same unit as a token in another. Summing across vendors adds unlike quantities — which is what every "AI market share by tokens" figure silently does. Request share, in the first tab, is the more comparable measure.
   </div>
 
   <!-- Global window control. Every panel states the window its data covers, and
@@ -92,19 +92,16 @@
   </div>
 
   <div class="tabs">
-    <button class="tab on" data-sec="tokens">Volume vs value</button>
-    <button class="tab" data-sec="trend">Share over time</button>
-    <button class="tab" data-sec="requests">Request share by task</button>
-    <button class="tab" data-sec="spend">Estimated spend <span class="pill derived">derived</span></button>
+    <button class="tab on" data-sec="requests">Request share by task</button>
     <button class="tab" data-sec="open">Open-weight share</button>
-    <button class="tab" data-sec="apps">By app category</button>
-    <button class="tab" data-sec="advisor">Routing advisor</button>
-    <button class="tab" data-sec="method">Formulas &amp; method</button>
-    <button class="tab" data-sec="unknown">Known unknowns</button>
+    <button class="tab" data-sec="tokens">Volume vs value</button>
+    <button class="tab" data-sec="trend">Share over time</button>
+    <button class="tab" data-sec="spend">Estimated spend <span class="pill derived">derived</span></button>
+    <button class="tab" data-sec="method">Methodology &amp; data fidelity</button>
   </div>
 
   <!-- ───────── tokens ───────── -->
-  <section id="sec-tokens" class="sec on">
+  <section id="sec-tokens" class="sec">
     <div class="panel">
       <h2>Volume versus value</h2>
       <p class="sub" style="margin-bottom:.5rem">Each dot is a vendor. Horizontal axis is share of tokens routed; vertical axis is share of estimated spend. The diagonal is parity — a vendor sitting on it earns exactly in proportion to the volume it moves. <b>Above the line, a vendor captures more value than volume. Below it, the reverse.</b> Dot size is absolute token volume.</p>
@@ -148,7 +145,7 @@
   </section>
 
   <!-- ───────── requests ───────── -->
-  <section id="sec-requests" class="sec">
+  <section id="sec-requests" class="sec on">
     <div class="panel">
       <h2>Traffic by task</h2>
       <p class="sub">OpenRouter classifies traffic by <em>task</em> — what the request was doing — not by industry. Both measures are shown throughout, because they disagree sharply: <b>Code and Agent work is 27% of requests but 72.5% of tokens.</b> A view showing only tokens would tell you this market is dominated by coding; by request count it's dominated by classification, extraction and chat.</p>
@@ -189,36 +186,7 @@
     </div>
   </section>
 
-  <!-- ───────── apps ───────── -->
-  <section id="sec-apps" class="sec">
-    <div class="panel">
-      <h2>Leading apps by category</h2>
-      <p class="sub" style="margin-bottom:1rem">OpenRouter's four app categories, with subcategories as tagged by the apps themselves.</p>
-      <div id="t-apps"></div>
-      <div class="src" id="src-apps"></div>
-    </div>
-  </section>
 
-  <!-- ───────── advisor ───────── -->
-  <section id="sec-advisor" class="sec">
-    <div class="panel">
-      <h2>Routing advisor</h2>
-      <div class="caveat">
-        <b>What this does not know.</b> This suggests a routing split from gateway traffic patterns and public list pricing. It has no view of your latency requirements, compliance obligations, data-residency constraints, or negotiated rates. Treat the output as a starting hypothesis for a routing conversation, not a procurement decision.
-      </div>
-      <div class="grid2">
-        <div>
-          <div class="field"><label>Monthly tokens (millions)</label><input id="adv-vol" type="number" value="500" min="1"></div>
-          <div class="field"><label>Coding / agentic development — % of volume</label><input id="adv-code" type="number" value="40" min="0" max="100"></div>
-          <div class="field"><label>Agent workflows / tool use — %</label><input id="adv-agent" type="number" value="25" min="0" max="100"></div>
-          <div class="field"><label>Document &amp; data processing — %</label><input id="adv-data" type="number" value="20" min="0" max="100"></div>
-          <div class="field"><label>General chat &amp; creative — %</label><input id="adv-gen" type="number" value="15" min="0" max="100"></div>
-          <button onclick="runAdvisor()">Suggest a routing split</button>
-        </div>
-        <div id="adv-out"><div class="empty">Enter a workload mix to see a suggested split.</div></div>
-      </div>
-    </div>
-  </section>
 
   <!-- ───────── method ───────── -->
   <section id="sec-method" class="sec">
@@ -231,6 +199,11 @@
       <h2>Definitions that change the answer</h2>
       <div id="defs"></div>
     </div>
+    <div class="panel unknown">
+      <h2>What this cannot tell you</h2>
+      <p class="sub">Every other page on this subject fills these gaps with numbers someone estimated. These are the questions the underlying data structurally cannot answer, and why.</p>
+      <ul id="t-unknown" style="padding-left:1.1rem"></ul>
+    </div>
     <div class="panel">
       <h2>Reconciliation</h2>
       <p class="sub">Shares must close to 100%. If they don't, something is being dropped silently.</p>
@@ -238,14 +211,6 @@
     </div>
   </section>
 
-  <!-- ───────── unknowns ───────── -->
-  <section id="sec-unknown" class="sec">
-    <div class="panel unknown">
-      <h2>What this dashboard cannot tell you</h2>
-      <p class="sub">Every other page on this subject fills these gaps with numbers from sources that estimated them. These are the questions the underlying data structurally cannot answer, and why.</p>
-      <ul id="t-unknown" style="padding-left:1.1rem"></ul>
-    </div>
-  </section>
 
   <p class="src" style="margin-top:2rem">
     Built with <a href="https://github.com/monamishra95/multi-agent-harness">multi-agent-harness</a>.
@@ -680,57 +645,13 @@ document.addEventListener('click', e => {
   else { TF.measure = b.dataset.m; renderTrend(); }
 });
 
-function runAdvisor() {
-  const out = document.getElementById('adv-out');
-  if (!DATA || !DATA.estimated_spend) { out.innerHTML = '<div class="empty">Pricing data not loaded.</div>'; return; }
-  const vol = +document.getElementById('adv-vol').value * 1e6;
-  const mix = { code:+document.getElementById('adv-code').value, agent:+document.getElementById('adv-agent').value,
-                data:+document.getElementById('adv-data').value, general:+document.getElementById('adv-gen').value };
-  const total = Object.values(mix).reduce((a,b)=>a+b,0);
-  if (Math.abs(total - 100) > 0.5) { out.innerHTML = `<div class="empty">Percentages total ${total}% — they need to sum to 100.</div>`; return; }
-
-  // Leading models per macro-category, taken from live task classifications.
-  const seg = DATA.task_segmentation;
-  const leaders = {};
-  if (seg) for (const c of seg.classifications) {
-    const m = (c.top_models||[])[0]; if (!m) continue;
-    if (!leaders[c.macro_category] || c.token_share_pct > leaders[c.macro_category].share)
-      leaders[c.macro_category] = { id:m.id, share:c.token_share_pct, task:c.display_name };
-  }
-  const price = {};
-  for (const r of DATA.estimated_spend.by_model) price[r.model] = r.blended_price_per_token;
-  const rows = Object.entries(mix).filter(([,p])=>p>0).map(([k,p]) => {
-    const L = leaders[k]; const tok = vol * p/100;
-    const pr = L ? price[L.id] : null;
-    return { segment:k, pct:p, tokens:tok, model:L?L.id:'no leader in data',
-             evidence:L?`leads ${L.task} with ${L.share}% of that task's tokens`:'no classification data for this segment',
-             cost: pr!=null ? tok*pr : null };
-  });
-  const known = rows.filter(r=>r.cost!=null);
-  const mixed = known.reduce((a,r)=>a+r.cost,0);
-  const prices = Object.values(price).filter(p=>p>0);
-  const premium = prices.length ? vol * Math.max(...prices) : null;
-
-  out.innerHTML = table([
-    {label:'Segment', get:r=>esc(r.segment)},
-    {label:'Share', num:1, get:r=>r.pct+'%'},
-    {label:'Suggested model', get:r=>esc(r.model)},
-    {label:'Est. cost', num:1, get:r=>r.cost!=null?fmtUSD(r.cost):'—'},
-  ], rows) +
-  `<div class="src" style="margin-top:1rem">
-     <b>Why these models:</b><ul style="margin:.4rem 0;padding-left:1.1rem">${rows.map(r=>`<li>${esc(r.segment)}: ${esc(r.evidence)}</li>`).join('')}</ul>
-     Estimated monthly cost with this split: <b>${fmtUSD(mixed)}</b>.
-     ${premium!=null?`Routing the same volume entirely to the most expensive model in the data would cost approximately <b>${fmtUSD(premium)}</b>.`:''}
-     <br><br>Costs use published list prices and blended prompt/completion rates. They exclude negotiated discounts, caching, and batch pricing.
-   </div>`;
-}
 
 fetch('data/computed.json')
   .then(r => { if (!r.ok) throw new Error('computed.json not found'); return r.json(); })
   .then(j => { DATA = j; render(); })
   .catch(e => {
     document.querySelectorAll('.sec').forEach(s => {
-      if (s.id !== 'sec-unknown') s.innerHTML =
+      if (s.id !== 'sec-method') s.innerHTML =
         `<div class="panel"><div class="empty">No data yet.<br><br>Run <code>python scripts/fetch_all.py</code> then <code>python scripts/compute.py</code> to populate <code>data/computed.json</code>.</div></div>`;
     });
   });
