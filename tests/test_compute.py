@@ -260,6 +260,34 @@ def test_openrouter_cloaked_models_excluded():
     with_fixture(run)
 
 
+def test_write_handles_every_real_response_shape():
+    """The fetch layer meets four different response shapes. `data` is a list on
+    rankings-daily and models, a dict on classifications. Calling .get() on the
+    list raised AttributeError and killed the models feed on every scheduled run
+    — the failure only surfaced in CI because the script had never been executed."""
+    import tempfile
+    from pathlib import Path as _P
+    sys.path.insert(0, str(ROOT / "scripts"))
+    import fetch_all as F
+    tmp = _P(tempfile.mkdtemp())
+    orig = F.DATA_DIR
+    F.DATA_DIR = tmp
+    try:
+        shapes = {
+            "rankings": {"data": [{"date": "2026-08-01"}], "meta": {"as_of": "X"}},
+            "models":   {"data": [{"id": "a/b"}]},                       # list, no meta
+            "classif":  {"data": {"as_of": "2026-08-30", "window_days": 7}},
+            "apps":     {"categories": {}, "meta": {"as_of": "Y"}},
+        }
+        for label, payload in shapes.items():
+            F.write("t.json", payload, "https://openrouter.ai/x", "daily")
+            doc = json.loads((tmp / "t.json").read_text())
+            assert doc["_provenance"]["as_of"], f"{label} produced no as_of"
+    finally:
+        F.DATA_DIR = orig
+        shutil.rmtree(tmp, ignore_errors=True)
+
+
 def test_known_unknowns_cover_industry_verticals():
     import compute
     text = json.dumps(compute.KNOWN_UNKNOWNS).lower()

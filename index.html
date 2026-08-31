@@ -41,6 +41,10 @@
   .field{margin-bottom:.75rem}
   button{background:#238636;border:0;color:#fff;padding:.55rem 1.1rem;border-radius:6px;cursor:pointer;font-weight:600;font-size:.88rem}
   .empty{color:var(--dim);padding:2rem;text-align:center;border:1px dashed var(--line);border-radius:6px}
+  .tframe{margin-bottom:1rem}
+  .tf{background:var(--panel);border:1px solid var(--line);color:var(--dim);padding:.3rem .7rem;border-radius:5px;cursor:pointer;font-size:.8rem;margin-right:.3rem}
+  .tf.on{background:#1f6feb22;border-color:var(--accent);color:var(--txt)}
+  .up{color:var(--good)}.down{color:#f85149}
   code{background:#0d1117;padding:.1rem .35rem;border-radius:3px;font-size:.85em}
 </style>
 </head>
@@ -59,7 +63,8 @@
   </div>
 
   <div class="tabs">
-    <button class="tab on" data-sec="tokens">Token share</button>
+    <button class="tab on" data-sec="tokens">Volume vs value</button>
+    <button class="tab" data-sec="trend">Share over time</button>
     <button class="tab" data-sec="requests">Request share by task</button>
     <button class="tab" data-sec="spend">Estimated spend <span class="pill derived">derived</span></button>
     <button class="tab" data-sec="open">Open-weight share</button>
@@ -71,14 +76,46 @@
   <!-- ───────── tokens ───────── -->
   <section id="sec-tokens" class="sec on">
     <div class="panel">
-      <h2>Token share by vendor</h2>
-      <div class="chart"><canvas id="c-vendor"></canvas></div>
+      <h2>Volume versus value</h2>
+      <p class="sub" style="margin-bottom:.5rem">Each dot is a vendor. Horizontal axis is share of tokens routed; vertical axis is share of estimated spend. The diagonal is parity — a vendor sitting on it earns exactly in proportion to the volume it moves. <b>Above the line, a vendor captures more value than volume. Below it, the reverse.</b> Dot size is absolute token volume.</p>
+      <div class="chart" style="height:420px"><canvas id="c-scatter"></canvas></div>
+      <div class="src" id="scatter-note"></div>
+    </div>
+
+    <div class="panel">
+      <h2>Token share and spend share, side by side</h2>
+      <div class="chart" style="height:420px"><canvas id="c-paired"></canvas></div>
       <div id="excl" class="src"></div>
       <div class="src" id="src-tokens"></div>
     </div>
+
     <div class="panel">
       <h2>Top models by tokens processed</h2>
       <div id="t-models"></div>
+    </div>
+  </section>
+
+  <!-- ───────── trend ───────── -->
+  <section id="sec-trend" class="sec">
+    <div class="panel">
+      <h2>Share over time</h2>
+      <div class="tframe">
+        <label style="display:inline;margin-right:.5rem">Window</label>
+        <button class="tf" data-w="4">4 weeks</button>
+        <button class="tf" data-w="13">13 weeks</button>
+        <button class="tf on" data-w="26">26 weeks</button>
+        <span style="margin-left:1rem;color:var(--dim);font-size:.8rem">
+          <label style="display:inline;margin-right:.4rem">Measure</label>
+          <button class="tf tm on" data-m="pct">Share %</button>
+          <button class="tf tm" data-m="abs">Absolute tokens</button>
+        </span>
+      </div>
+      <div class="chart" style="height:440px"><canvas id="c-trend"></canvas></div>
+      <div class="src" id="trend-note"></div>
+    </div>
+    <div class="panel">
+      <h2>Movers over the selected window</h2>
+      <div id="t-movers"></div>
     </div>
   </section>
 
@@ -192,15 +229,50 @@ function provenance(p) {
   return `${esc(p.citation || '')}<br>Retrieved ${esc((p.fetched_at||'').slice(0,10))} · refresh: ${esc(p.cadence||'')} · <a href="${esc(p.source_url||'#')}" target="_blank">source</a>`;
 }
 
-function donut(id, labels, values, title) {
+const AX = { ticks:{color:'#8b949e'}, grid:{color:'#21262d'} };
+
+/* Horizontal bars beat pies past about six categories: labels stay readable and
+   magnitudes are compared along a common baseline rather than by arc angle. */
+function hbar(id, labels, series) {
   const el = document.getElementById(id); if (!el) return;
-  new Chart(el.getContext('2d'), {
-    type: 'doughnut',
-    data: { labels, datasets: [{ data: values, backgroundColor: COLORS, borderColor: '#161b22', borderWidth: 2 }] },
+  return new Chart(el.getContext('2d'), {
+    type: 'bar',
+    data: { labels, datasets: series.map((s,i) => ({
+      label: s.label, data: s.data, backgroundColor: s.color || COLORS[i],
+      borderRadius: 2, barPercentage: 0.88, categoryPercentage: 0.82 })) },
+    options: { indexAxis: 'y', responsive:true, maintainAspectRatio:false,
+      scales:{ x:{ ...AX, ticks:{color:'#8b949e', callback:v=>v+'%'}, title:{display:true,text:'share of total (%)',color:'#8b949e'} },
+               y:{ ...AX } },
+      plugins:{ legend:{ labels:{color:'#e6edf3', boxWidth:12} },
+        tooltip:{ callbacks:{ label: c => `${c.dataset.label}: ${c.parsed.x.toFixed(2)}%` } } } }
+  });
+}
+
+/* Volume against value, with a parity diagonal. This is the chart that carries
+   the finding — two pies cannot show a relationship, only two magnitudes. */
+function scatter(id, points) {
+  const el = document.getElementById(id); if (!el) return;
+  const max = Math.max(...points.map(p => Math.max(p.x, p.y))) * 1.12;
+  const area = points.map(p => p.tokens);
+  const maxA = Math.max(...area);
+  return new Chart(el.getContext('2d'), {
+    type: 'scatter',
+    data: { datasets: [
+      { label: 'parity (spend share = token share)', type:'line',
+        data: [{x:0,y:0},{x:max,y:max}], borderColor:'#484f58', borderDash:[6,4],
+        borderWidth:1, pointRadius:0, fill:false },
+      { label: 'vendor', data: points,
+        backgroundColor: points.map((_,i)=>COLORS[i % COLORS.length] + 'cc'),
+        borderColor: points.map((_,i)=>COLORS[i % COLORS.length]), borderWidth:1,
+        pointRadius: points.map(p => 6 + 18 * Math.sqrt(p.tokens / maxA)),
+        pointHoverRadius: points.map(p => 8 + 18 * Math.sqrt(p.tokens / maxA)) } ] },
     options: { responsive:true, maintainAspectRatio:false,
-      plugins:{ legend:{ position:'right', labels:{ color:'#e6edf3', boxWidth:12, font:{size:11} } },
-        title:{ display:!!title, text:title, color:'#8b949e' },
-        tooltip:{ callbacks:{ label: c => `${c.label}: ${c.parsed.toFixed(2)}%` } } } }
+      scales:{ x:{ ...AX, title:{display:true,text:'share of tokens routed (%)',color:'#8b949e'}, min:0, max },
+               y:{ ...AX, title:{display:true,text:'share of estimated spend (%)',color:'#8b949e'}, min:0, max } },
+      plugins:{ legend:{ labels:{color:'#e6edf3', boxWidth:12, filter:i=>i.text!=='vendor'} },
+        tooltip:{ callbacks:{ label: c => c.raw.v
+          ? `${c.raw.v}: ${c.raw.x.toFixed(2)}% tokens, ${c.raw.y.toFixed(2)}% spend (${(c.raw.y/c.raw.x).toFixed(1)}x)`
+          : '' } } } }
   });
 }
 
@@ -213,9 +285,26 @@ function render() {
   document.getElementById('gen-stamp').textContent =
     'Data as of ' + ((d.generated_from['tokens-daily.json']||{}).as_of || '').slice(0,10) + '.';
 
-  // token share
-  const vend = ts.by_vendor.slice(0, 10);
-  donut('c-vendor', vend.map(v=>v.key), vend.map(v=>v.share_pct));
+  // volume vs value
+  const spendMap = {};
+  if (d.estimated_spend) for (const s of d.estimated_spend.by_vendor) spendMap[s.vendor] = s.share_pct;
+  const vend = ts.by_vendor.slice(0, 12);
+  const pts = vend.filter(v => spendMap[v.key] != null)
+    .map(v => ({ x: v.share_pct, y: spendMap[v.key], tokens: v.tokens, v: v.key }));
+  scatter('c-scatter', pts);
+
+  const above = pts.filter(p => p.y > p.x).sort((a,b)=>(b.y/b.x)-(a.y/a.x));
+  const below = pts.filter(p => p.y < p.x).sort((a,b)=>(a.y/a.x)-(b.y/b.x));
+  document.getElementById('scatter-note').innerHTML =
+    (above[0] ? `<b>${esc(above[0].v)}</b> captures ${(above[0].y/above[0].x).toFixed(1)}× its share of volume in value — ${above[0].x.toFixed(1)}% of tokens, ${above[0].y.toFixed(1)}% of spend. ` : '') +
+    (below[0] ? `<b>${esc(below[0].v)}</b> is the mirror image at ${(below[0].y/below[0].x).toFixed(2)}× — ${below[0].x.toFixed(1)}% of tokens, ${below[0].y.toFixed(1)}% of spend. ` : '') +
+    'Spend is a derived estimate; see that tab for its assumptions.';
+
+  // paired bars
+  hbar('c-paired', vend.map(v=>v.key), [
+    { label:'Share of tokens', data: vend.map(v=>v.share_pct), color:'#58a6ff' },
+    { label:'Share of estimated spend', data: vend.map(v=>spendMap[v.key] ?? 0), color:'#d29922' },
+  ]);
   const t = ts.totals;
   document.getElementById('excl').innerHTML =
     `<b style="color:#d29922">Excluded from these shares:</b> ${fmtN(t.unattributed_tokens)} tokens from anonymous or stealth providers — <b>${t.unattributed_pct_of_visible}% of visible traffic</b>. ${esc(ts.exclusion_rule)}`;
@@ -257,8 +346,9 @@ function render() {
   // spend
   if (d.estimated_spend) {
     const sp = d.estimated_spend;
-    const bv = sp.by_vendor.slice(0, 10);
-    donut('c-spend', bv.map(v=>v.vendor), bv.map(v=>v.share_pct));
+    const bv = sp.by_vendor.slice(0, 12);
+    hbar('c-spend', bv.map(v=>v.vendor), [
+      { label:'Share of estimated routed spend', data: bv.map(v=>v.share_pct), color:'#d29922' }]);
     document.getElementById('spend-assume').innerHTML =
       '<b>How this is calculated:</b><ul style="margin:.5rem 0 0;padding-left:1.1rem">' +
       sp.assumptions.map(a=>`<li>${esc(a)}</li>`).join('') + '</ul>' +
@@ -269,7 +359,10 @@ function render() {
   // open weight
   if (d.open_weight) {
     const ow = d.open_weight;
-    donut('c-open', ow.buckets.map(b=>b.classification), ow.buckets.map(b=>b.share_pct));
+    const cmap = { open:'#3fb950', 'open-restricted':'#d29922', unknown:'#484f58' };
+    hbar('c-open', [''], ow.buckets.map(b => ({
+      label: `${b.classification} (${b.share_pct.toFixed(1)}%)`,
+      data: [b.share_pct], color: cmap[b.classification] || '#58a6ff' })));
     document.getElementById('open-method').innerHTML =
       `<h2 style="font-size:.95rem">Method</h2><p class="src" style="margin-top:0">${esc(ow.method)}</p>`;
     document.getElementById('t-open').innerHTML = table([
@@ -286,7 +379,77 @@ function render() {
   // unknowns
   document.getElementById('t-unknown').innerHTML =
     d.known_unknowns.map(u=>`<li><b>${esc(u.question)}</b><span>${esc(u.why)}</span></li>`).join('');
+
+  if (d.series) renderTrend();
 }
+
+/* ── share over time ─────────────────────────────────────────────────────── */
+let trendChart, TF = { weeks: 26, measure: 'pct' };
+
+function renderTrend() {
+  const s = DATA.series;
+  if (!s) return;
+  const n = Math.min(TF.weeks, s.weeks.length);
+  const weeks = s.weeks.slice(-n);
+  const names = Object.keys(s.vendors).filter(v => !v.startsWith('_'));
+
+  // Rank by volume within the selected window, not overall — a 4-week view
+  // should show who is large now, not who was large in March.
+  const windowed = {};
+  for (const v of names) windowed[v] = s.vendors[v].slice(-n);
+  const ranked = names.sort((a,b) =>
+    windowed[b].reduce((x,y)=>x+y,0) - windowed[a].reduce((x,y)=>x+y,0)).slice(0, 8);
+
+  // Denominator includes the long tail but excludes unattributed traffic,
+  // matching how every other share on this page is computed.
+  const totals = weeks.map((_, i) =>
+    names.reduce((a,v)=>a + windowed[v][i], 0) + (s.vendors._other || []).slice(-n)[i]);
+
+  const datasets = ranked.map((v, i) => ({
+    label: v,
+    data: windowed[v].map((x, i2) => TF.measure === 'pct' ? +(100*x/totals[i2]).toFixed(2) : x),
+    borderColor: COLORS[i], backgroundColor: COLORS[i] + (TF.measure==='pct' ? '66' : '33'),
+    fill: TF.measure === 'pct' ? 'stack' : false, tension: 0.25, pointRadius: 0, borderWidth: 2,
+  }));
+
+  if (trendChart) trendChart.destroy();
+  trendChart = new Chart(document.getElementById('c-trend').getContext('2d'), {
+    type: 'line',
+    data: { labels: weeks, datasets },
+    options: { responsive:true, maintainAspectRatio:false, interaction:{mode:'index',intersect:false},
+      scales:{ x:{ ...AX, ticks:{color:'#8b949e', maxTicksLimit:10} },
+               y:{ ...AX, stacked: TF.measure === 'pct',
+                   ticks:{ color:'#8b949e', callback: v => TF.measure==='pct' ? v+'%' : fmtN(v) },
+                   title:{ display:true, color:'#8b949e',
+                     text: TF.measure==='pct' ? 'share of routed tokens (%)' : 'tokens per week' } } },
+      plugins:{ legend:{ labels:{color:'#e6edf3', boxWidth:12, font:{size:11}} },
+        tooltip:{ callbacks:{ label: c => `${c.dataset.label}: ${TF.measure==='pct' ? c.parsed.y.toFixed(2)+'%' : fmtN(c.parsed.y)}` } } } }
+  });
+
+  document.getElementById('trend-note').innerHTML =
+    `${weeks[0]} to ${weeks[weeks.length-1]} · weekly buckets · top 8 vendors by volume in this window.<br>${esc(s.note)}`;
+
+  // movers: first vs last week share within the window
+  const movers = ranked.map(v => {
+    const a = 100*windowed[v][0]/totals[0], b = 100*windowed[v][n-1]/totals[n-1];
+    return { v, from:a, to:b, delta:b-a };
+  }).sort((x,y)=>y.delta-x.delta);
+  document.getElementById('t-movers').innerHTML = table([
+    {label:'Vendor', get:r=>esc(r.v)},
+    {label:weeks[0], num:1, get:r=>r.from.toFixed(2)+'%'},
+    {label:weeks[weeks.length-1], num:1, get:r=>r.to.toFixed(2)+'%'},
+    {label:'Change', num:1, get:r=>`<span class="${r.delta>=0?'up':'down'}">${r.delta>=0?'+':''}${r.delta.toFixed(2)}pp</span>`},
+  ], movers);
+}
+
+document.addEventListener('click', e => {
+  const b = e.target.closest('.tf'); if (!b) return;
+  const grp = b.dataset.w ? '.tf[data-w]' : '.tf[data-m]';
+  document.querySelectorAll(grp).forEach(x => x.classList.remove('on'));
+  b.classList.add('on');
+  if (b.dataset.w) TF.weeks = +b.dataset.w; else TF.measure = b.dataset.m;
+  renderTrend();
+});
 
 function runAdvisor() {
   const out = document.getElementById('adv-out');

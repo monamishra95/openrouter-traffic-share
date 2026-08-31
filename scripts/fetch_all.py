@@ -75,7 +75,19 @@ def write(name: str, payload: dict, source_url: str, cadence: str, notes: str = 
     """Write a feed file with provenance attached to the raw response."""
     DATA_DIR.mkdir(parents=True, exist_ok=True)
     raw = payload
-    as_of = (raw.get("meta") or {}).get("as_of") or (raw.get("data") or {}).get("as_of") or ""
+    # `data` is a list on some endpoints (models, rankings-daily) and a dict on
+    # others (classifications). Calling .get() on the list raised AttributeError
+    # and killed the models feed on every run. Check the type rather than
+    # relying on `or` short-circuiting, which only masked it where meta existed.
+    meta = raw.get("meta")
+    data = raw.get("data")
+    as_of = ""
+    if isinstance(meta, dict):
+        as_of = meta.get("as_of") or ""
+    if not as_of and isinstance(data, dict):
+        as_of = data.get("as_of") or ""
+    if not as_of:
+        as_of = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
     body = json.dumps(raw, sort_keys=True)
     doc = {
         "_provenance": {
@@ -216,6 +228,11 @@ def main() -> int:
     # models before licences: the licence lookup reads the registry.
     names.sort(key=lambda n: 0 if n == "models" else 1 if n != "licences" else 2)
 
+    # The licence feed makes ~400 HuggingFace requests and is the most likely to
+    # rate-limit or time out. A failure there must not discard the core feeds that
+    # already succeeded, so it degrades to a warning; everything else is fatal.
+    OPTIONAL = {"licences"}
+    failed = []
     for name in names:
         print(f"\n[{name}]")
         try:
@@ -224,7 +241,14 @@ def main() -> int:
             raise
         except Exception as e:
             print(f"  FAILED: {type(e).__name__}: {e}")
-            return 1
+            if name in OPTIONAL:
+                print("  (optional feed — continuing; open-weight view will be incomplete)")
+                failed.append(name)
+            else:
+                return 1
+    if failed:
+        print(f"\nDone with warnings. Optional feed(s) failed: {', '.join(failed)}")
+        return 0
     print("\nDone. Data written to data/ — review before committing.")
     return 0
 
