@@ -45,6 +45,22 @@
   .tf{background:var(--panel);border:1px solid var(--line);color:var(--dim);padding:.3rem .7rem;border-radius:5px;cursor:pointer;font-size:.8rem;margin-right:.3rem}
   .tf.on{background:#1f6feb22;border-color:var(--accent);color:var(--txt)}
   .up{color:var(--good)}.down{color:#f85149}
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(330px,1fr));gap:1.1rem}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:1.1rem}
+  .card h3{margin:0 0 .15rem;font-size:1.05rem}
+  .card .metrics{display:flex;gap:1.4rem;margin:.7rem 0 .9rem;padding:.6rem 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+  .card .metric{flex:1}
+  .card .metric b{display:block;font-size:1.35rem;font-variant-numeric:tabular-nums;line-height:1.2}
+  .card .metric span{font-size:.72rem;color:var(--dim);text-transform:uppercase;letter-spacing:.03em}
+  .card .task{margin-bottom:.85rem}
+  .card .task-h{display:flex;justify-content:space-between;font-size:.85rem;margin-bottom:.25rem}
+  .card .task-h b{font-weight:600}
+  .card .task-h span{color:var(--dim);font-variant-numeric:tabular-nums}
+  .card .mdl{display:flex;justify-content:space-between;font-size:.76rem;color:var(--dim);padding:.1rem 0}
+  .card .mdl code{background:transparent;padding:0;color:#c9d1d9}
+  .ratio{font-size:.72rem;padding:.05rem .4rem;border-radius:99px;border:1px solid var(--line)}
+  .ratio.heavy{border-color:var(--warn);color:var(--warn)}
+  .ratio.light{border-color:var(--accent);color:var(--accent)}
   code{background:#0d1117;padding:.1rem .35rem;border-radius:3px;font-size:.85em}
 </style>
 </head>
@@ -60,6 +76,16 @@
   </div>
   <div class="caveat">
     <b>Tokens from different vendors are not directly comparable.</b> Each provider counts with its own tokenizer, so a token in one row is not the same unit as a token in another. Summing across vendors adds unlike quantities — which is what every "AI market share by tokens" figure silently does. Request share, in the second tab, is the more comparable measure.
+  </div>
+
+  <!-- Global window control. Every panel states the window its data covers, and
+       panels that cannot follow this selector say so rather than staying silent. -->
+  <div class="panel" style="padding:.75rem 1.1rem;display:flex;align-items:center;gap:.6rem;flex-wrap:wrap">
+    <b style="font-size:.85rem">Time window</b>
+    <button class="tf" data-w="4">4 weeks</button>
+    <button class="tf" data-w="13">13 weeks</button>
+    <button class="tf on" data-w="26">26 weeks</button>
+    <span id="win-label" style="color:var(--dim);font-size:.8rem;margin-left:.4rem"></span>
   </div>
 
   <div class="tabs">
@@ -100,15 +126,10 @@
     <div class="panel">
       <h2>Share over time</h2>
       <div class="tframe">
-        <label style="display:inline;margin-right:.5rem">Window</label>
-        <button class="tf" data-w="4">4 weeks</button>
-        <button class="tf" data-w="13">13 weeks</button>
-        <button class="tf on" data-w="26">26 weeks</button>
-        <span style="margin-left:1rem;color:var(--dim);font-size:.8rem">
-          <label style="display:inline;margin-right:.4rem">Measure</label>
-          <button class="tf tm on" data-m="pct">Share %</button>
-          <button class="tf tm" data-m="abs">Absolute tokens</button>
-        </span>
+        <label style="display:inline;margin-right:.4rem">Measure</label>
+        <button class="tf tm on" data-m="pct">Share %</button>
+        <button class="tf tm" data-m="abs">Absolute tokens</button>
+        <span style="color:var(--dim);font-size:.8rem;margin-left:.8rem">Window is set globally above.</span>
       </div>
       <div class="chart" style="height:440px"><canvas id="c-trend"></canvas></div>
       <div class="src" id="trend-note"></div>
@@ -122,12 +143,13 @@
   <!-- ───────── requests ───────── -->
   <section id="sec-requests" class="sec">
     <div class="panel">
-      <h2>Traffic by task classification</h2>
-      <p class="sub" style="margin-bottom:1rem">OpenRouter classifies traffic by <em>task</em> — what the request was doing — not by industry. Share of requests is shown alongside share of tokens, because the two differ sharply: agentic work consumes far more tokens per request than chat.</p>
-      <div class="chart"><canvas id="c-tasks"></canvas></div>
-      <div id="t-tasks" style="margin-top:1.25rem"></div>
+      <h2>Traffic by task</h2>
+      <p class="sub">OpenRouter classifies traffic by <em>task</em> — what the request was doing — not by industry. Both measures are shown throughout, because they disagree sharply: <b>Code and Agent work is 27% of requests but 72.5% of tokens.</b> A view showing only tokens would tell you this market is dominated by coding; by request count it's dominated by classification, extraction and chat.</p>
+      <div class="caveat" id="task-window" style="border-left-color:var(--accent)"></div>
+      <div class="chart" style="height:300px"><canvas id="c-tasks"></canvas></div>
       <div class="src" id="src-tasks"></div>
     </div>
+    <div id="cards"></div>
   </section>
 
   <!-- ───────── spend ───────── -->
@@ -146,10 +168,10 @@
   <section id="sec-open" class="sec">
     <div class="panel">
       <h2>Open-weight versus proprietary</h2>
-      <div class="grid2">
-        <div class="chart"><canvas id="c-open"></canvas></div>
-        <div id="open-method"></div>
-      </div>
+      <div class="caveat" id="open-headline" style="border-left-color:var(--good)"></div>
+      <p class="sub">Measured on <b>share of routed token traffic</b>, not on how many models exist — one high-volume open model outweighs many rarely-used ones. Window: <span class="winbadge"></span></p>
+      <div class="chart" style="height:170px"><canvas id="c-open"></canvas></div>
+      <div id="open-method" style="margin-top:1rem"></div>
     </div>
     <div class="panel">
       <h2>Classification per model</h2>
@@ -285,62 +307,56 @@ function render() {
   document.getElementById('gen-stamp').textContent =
     'Data as of ' + ((d.generated_from['tokens-daily.json']||{}).as_of || '').slice(0,10) + '.';
 
-  // volume vs value
-  const spendMap = {};
-  if (d.estimated_spend) for (const s of d.estimated_spend.by_vendor) spendMap[s.vendor] = s.share_pct;
-  const vend = ts.by_vendor.slice(0, 12);
-  const pts = vend.filter(v => spendMap[v.key] != null)
-    .map(v => ({ x: v.share_pct, y: spendMap[v.key], tokens: v.tokens, v: v.key }));
-  scatter('c-scatter', pts);
+  renderTokenPanels();
 
-  const above = pts.filter(p => p.y > p.x).sort((a,b)=>(b.y/b.x)-(a.y/a.x));
-  const below = pts.filter(p => p.y < p.x).sort((a,b)=>(a.y/a.x)-(b.y/b.x));
-  document.getElementById('scatter-note').innerHTML =
-    (above[0] ? `<b>${esc(above[0].v)}</b> captures ${(above[0].y/above[0].x).toFixed(1)}× its share of volume in value — ${above[0].x.toFixed(1)}% of tokens, ${above[0].y.toFixed(1)}% of spend. ` : '') +
-    (below[0] ? `<b>${esc(below[0].v)}</b> is the mirror image at ${(below[0].y/below[0].x).toFixed(2)}× — ${below[0].x.toFixed(1)}% of tokens, ${below[0].y.toFixed(1)}% of spend. ` : '') +
-    'Spend is a derived estimate; see that tab for its assumptions.';
-
-  // paired bars
-  hbar('c-paired', vend.map(v=>v.key), [
-    { label:'Share of tokens', data: vend.map(v=>v.share_pct), color:'#58a6ff' },
-    { label:'Share of estimated spend', data: vend.map(v=>spendMap[v.key] ?? 0), color:'#d29922' },
-  ]);
-  const t = ts.totals;
-  document.getElementById('excl').innerHTML =
-    `<b style="color:#d29922">Excluded from these shares:</b> ${fmtN(t.unattributed_tokens)} tokens from anonymous or stealth providers — <b>${t.unattributed_pct_of_visible}% of visible traffic</b>. ${esc(ts.exclusion_rule)}`;
-  document.getElementById('src-tokens').innerHTML = provenance(d.generated_from['tokens-daily.json']);
-  document.getElementById('t-models').innerHTML = table([
-    {label:'Model', get:r=>esc(r.key)},
-    {label:'Tokens', num:1, get:r=>fmtN(r.tokens)},
-    {label:'Share', num:1, get:r=>r.share_pct.toFixed(2)+'%'},
-  ], ts.by_model.slice(0, 25));
-
-  // tasks
+  // tasks — macro bar plus a card per category
   if (d.task_segmentation) {
     const seg = d.task_segmentation;
     const mc = seg.macro_categories || [];
-    const el = document.getElementById('c-tasks');
-    new Chart(el.getContext('2d'), {
+    document.getElementById('task-window').innerHTML =
+      `<b>Window: trailing ${seg.window_days} days</b> (to ${esc(seg.as_of)}). ${esc(seg.window_note || '')}`;
+
+    new Chart(document.getElementById('c-tasks').getContext('2d'), {
       type:'bar',
       data:{ labels: mc.map(m=>m.label), datasets:[
-        { label:'Share of requests', data: mc.map(m=>+(m.usage_share*100).toFixed(2)), backgroundColor:'#58a6ff' },
-        { label:'Share of tokens',   data: mc.map(m=>+(m.token_share*100).toFixed(2)), backgroundColor:'#3fb950' } ]},
+        { label:'Share of requests', data: mc.map(m=>+(m.usage_share*100).toFixed(2)), backgroundColor:'#58a6ff', borderRadius:2 },
+        { label:'Share of tokens',   data: mc.map(m=>+(m.token_share*100).toFixed(2)), backgroundColor:'#3fb950', borderRadius:2 } ]},
       options:{ responsive:true, maintainAspectRatio:false,
-        scales:{ x:{ ticks:{color:'#8b949e'}, grid:{color:'#21262d'} },
-                 y:{ ticks:{color:'#8b949e', callback:v=>v+'%'}, grid:{color:'#21262d'} } },
-        plugins:{ legend:{ labels:{color:'#e6edf3', boxWidth:12} } } }
+        scales:{ x:{ ...AX }, y:{ ...AX, ticks:{color:'#8b949e', callback:v=>v+'%'} } },
+        plugins:{ legend:{ labels:{color:'#e6edf3', boxWidth:12} },
+          tooltip:{ callbacks:{ label:c=>`${c.dataset.label}: ${c.parsed.y.toFixed(1)}%` } } } }
     });
-    document.getElementById('t-tasks').innerHTML = table([
-      {label:'Task', get:r=>esc(r.display_name)},
-      {label:'Category', get:r=>esc(r.macro_category)},
-      {label:'Requests', num:1, get:r=>r.usage_share_pct.toFixed(2)+'%'},
-      {label:'Tokens', num:1, get:r=>r.token_share_pct.toFixed(2)+'%'},
-      {label:'Leading model', get:r=>esc((r.top_models[0]||{}).id || '—')},
-    ], seg.classifications);
     document.getElementById('src-tasks').innerHTML =
       esc(seg.note) + '<br>' + provenance(d.generated_from['tasks.json']);
-  } else {
-    document.getElementById('t-tasks').innerHTML = '<div class="empty">tasks.json not present — run the fetch script.</div>';
+
+    const cards = mc.map(m => {
+      const tasks = seg.classifications
+        .filter(c => c.macro_category === m.key)
+        .sort((a,b) => b.usage_share_pct - a.usage_share_pct);
+      const req = m.usage_share*100, tok = m.token_share*100;
+      const ratio = tok/req;
+      const rcls = ratio >= 1.5 ? 'heavy' : ratio <= 0.7 ? 'light' : '';
+      const rtxt = ratio >= 1.5 ? `${ratio.toFixed(1)}× token-heavy`
+                 : ratio <= 0.7 ? `${ratio.toFixed(2)}× token-light` : 'balanced';
+      return `<div class="card">
+        <h3>${esc(m.label)} <span class="ratio ${rcls}">${rtxt}</span></h3>
+        <div style="font-size:.8rem;color:var(--dim)">${tasks.length} task${tasks.length===1?'':'s'}</div>
+        <div class="metrics">
+          <div class="metric"><b>${req.toFixed(1)}%</b><span>of requests</span></div>
+          <div class="metric"><b>${tok.toFixed(1)}%</b><span>of tokens</span></div>
+        </div>
+        ${tasks.map(t => `
+          <div class="task">
+            <div class="task-h"><b>${esc(t.display_name)}</b>
+              <span>${t.usage_share_pct.toFixed(1)}% req · ${t.token_share_pct.toFixed(1)}% tok</span></div>
+            ${t.top_models.map((x,i) => `
+              <div class="mdl"><code>${i+1}. ${esc(x.id)}</code>
+                <span>${x.req_pct.toFixed(1)}% / ${x.tok_pct.toFixed(1)}%</span></div>`).join('')}
+          </div>`).join('')}
+        <div class="src" style="margin-top:.4rem">Per-model figures are share of that task's requests / tokens.</div>
+      </div>`;
+    }).join('');
+    document.getElementById('cards').innerHTML = `<div class="cards">${cards}</div>`;
   }
 
   // spend
@@ -359,7 +375,11 @@ function render() {
   // open weight
   if (d.open_weight) {
     const ow = d.open_weight;
-    const cmap = { open:'#3fb950', 'open-restricted':'#d29922', unknown:'#484f58' };
+    const cmap = { open:'#3fb950', 'open-restricted':'#d29922', proprietary:'#a371f7', unknown:'#484f58' };
+    const openish = ow.buckets.filter(b => b.classification.startsWith('open'))
+                              .reduce((a,b) => a + b.share_pct, 0);
+    document.getElementById('open-headline').innerHTML =
+      `<b>Open-weight models carry ${openish.toFixed(1)}% of routed token traffic</b> — ${ow.buckets.find(b=>b.classification==='open')?.share_pct.toFixed(1)}% under permissive licences (MIT, Apache-2.0) and ${ow.buckets.find(b=>b.classification==='open-restricted')?.share_pct.toFixed(1)}% under bespoke licences with use restrictions. This is measured on <b>traffic, not model count</b>.`;
     hbar('c-open', [''], ow.buckets.map(b => ({
       label: `${b.classification} (${b.share_pct.toFixed(1)}%)`,
       data: [b.share_pct], color: cmap[b.classification] || '#58a6ff' })));
@@ -380,18 +400,60 @@ function render() {
   document.getElementById('t-unknown').innerHTML =
     d.known_unknowns.map(u=>`<li><b>${esc(u.question)}</b><span>${esc(u.why)}</span></li>`).join('');
 
-  if (d.series) renderTrend();
+  if (d.series) applyWindow(); else renderTokenPanels();
 }
 
 /* ── share over time ─────────────────────────────────────────────────────── */
-let trendChart, TF = { weeks: 26, measure: 'pct' };
+let trendChart, scatterChart, pairedChart, TF = { weeks: 26, measure: 'pct' }, WIN = null;
+
+/* Token-share panels, recomputed for whatever window is selected. */
+function renderTokenPanels() {
+  const d = DATA;
+  const ts = d.token_share;
+  const useWin = !!WIN;
+  const vendors = (useWin ? WIN.vendors : ts.by_vendor).slice(0, 12);
+  const spendMap = {};
+  if (d.estimated_spend) for (const s of d.estimated_spend.by_vendor) spendMap[s.vendor] = s.share_pct;
+
+  const pts = vendors.filter(v => spendMap[v.key] != null)
+    .map(v => ({ x: v.share_pct, y: spendMap[v.key], tokens: v.tokens, v: v.key }));
+  if (scatterChart) scatterChart.destroy();
+  scatterChart = scatter('c-scatter', pts);
+
+  const above = pts.filter(p => p.y > p.x).sort((a,b)=>(b.y/b.x)-(a.y/a.x));
+  const below = pts.filter(p => p.y < p.x).sort((a,b)=>(a.y/a.x)-(b.y/b.x));
+  document.getElementById('scatter-note').innerHTML =
+    (above[0] ? `<b>${esc(above[0].v)}</b> captures ${(above[0].y/above[0].x).toFixed(1)}× its share of volume in value — ${above[0].x.toFixed(1)}% of tokens, ${above[0].y.toFixed(1)}% of spend. ` : '') +
+    (below[0] ? `<b>${esc(below[0].v)}</b> is the mirror image at ${(below[0].y/below[0].x).toFixed(2)}× — ${below[0].x.toFixed(1)}% of tokens, ${below[0].y.toFixed(1)}% of spend. ` : '') +
+    `<br><b>Token share:</b> ${useWin ? WIN.start+' → '+WIN.end : ts.window.start+' → '+ts.window.end}. ` +
+    `<b>Spend share:</b> full ${ts.window.days}-day window — the per-model volumes needed to recompute spend weekly are not stored, so this axis does not follow the selector.`;
+
+  if (pairedChart) pairedChart.destroy();
+  pairedChart = hbar('c-paired', vendors.map(v=>v.key), [
+    { label:'Share of tokens (selected window)', data: vendors.map(v=>v.share_pct), color:'#58a6ff' },
+    { label:`Share of estimated spend (${ts.window.days}d)`, data: vendors.map(v=>spendMap[v.key] ?? 0), color:'#d29922' },
+  ]);
+
+  const exTok = useWin ? WIN.excluded : ts.totals.unattributed_tokens;
+  const exPct = useWin ? WIN.exclPct : ts.totals.unattributed_pct_of_visible;
+  document.getElementById('excl').innerHTML =
+    `<b style="color:#d29922">Excluded from these shares:</b> ${fmtN(exTok)} tokens from anonymous or stealth providers — <b>${exPct}% of visible traffic</b> in this window. ${esc(ts.exclusion_rule)}`;
+  document.getElementById('src-tokens').innerHTML = provenance(d.generated_from['tokens-daily.json']);
+  document.getElementById('t-models').innerHTML =
+    `<p class="src" style="margin-top:0">Model-level detail covers the full ${ts.window.days}-day window; the weekly series is stored per vendor, not per model.</p>` +
+    table([
+      {label:'Model', get:r=>esc(r.key)},
+      {label:'Tokens', num:1, get:r=>fmtN(r.tokens)},
+      {label:'Share', num:1, get:r=>r.share_pct.toFixed(2)+'%'},
+    ], ts.by_model.slice(0, 25));
+}
 
 function renderTrend() {
   const s = DATA.series;
   if (!s) return;
   const n = Math.min(TF.weeks, s.weeks.length);
   const weeks = s.weeks.slice(-n);
-  const names = Object.keys(s.vendors).filter(v => !v.startsWith('_'));
+  let names = Object.keys(s.vendors).filter(v => !v.startsWith('_'));
 
   // Rank by volume within the selected window, not overall — a 4-week view
   // should show who is large now, not who was large in March.
@@ -442,13 +504,44 @@ function renderTrend() {
   ], movers);
 }
 
+/* Recompute the token-share panels for the selected window. Spend and task data
+   cannot follow it — spend needs per-model weekly volumes we don't store, and the
+   classifications endpoint publishes a 7-day window only. Rather than leave that
+   ambiguous, each panel states the window it actually covers. */
+function applyWindow() {
+  const s = DATA.series; if (!s) return;
+  const n = Math.min(TF.weeks, s.weeks.length);
+  const weeks = s.weeks.slice(-n);
+  document.getElementById('win-label').textContent =
+    `${weeks[0]} to ${weeks[weeks.length-1]} · ${n} weeks · applies to token share and trend`;
+
+  const names = Object.keys(s.vendors).filter(v => !v.startsWith('_'));
+  const tot = {};
+  names.forEach(v => tot[v] = s.vendors[v].slice(-n).reduce((a,b)=>a+b,0));
+  const other = (s.vendors._other || []).slice(-n).reduce((a,b)=>a+b,0);
+  const excl  = (s.vendors._unattributed || []).slice(-n).reduce((a,b)=>a+b,0);
+  const denom = Object.values(tot).reduce((a,b)=>a+b,0) + other;
+
+  WIN = {
+    weeks: n, start: weeks[0], end: weeks[weeks.length-1], denom, excluded: excl,
+    vendors: Object.entries(tot).sort((a,b)=>b[1]-a[1])
+      .map(([k,t]) => ({ key:k, tokens:t, share_pct:+(100*t/denom).toFixed(3) })),
+    exclPct: +(100*excl/(denom+excl)).toFixed(2),
+  };
+  document.querySelectorAll('.winbadge').forEach(el => {
+    el.textContent = el.dataset.fixed ? el.dataset.fixed : `${WIN.start} → ${WIN.end} (${n} weeks)`;
+  });
+  renderTokenPanels();
+  renderTrend();
+}
+
 document.addEventListener('click', e => {
   const b = e.target.closest('.tf'); if (!b) return;
   const grp = b.dataset.w ? '.tf[data-w]' : '.tf[data-m]';
   document.querySelectorAll(grp).forEach(x => x.classList.remove('on'));
   b.classList.add('on');
-  if (b.dataset.w) TF.weeks = +b.dataset.w; else TF.measure = b.dataset.m;
-  renderTrend();
+  if (b.dataset.w) { TF.weeks = +b.dataset.w; applyWindow(); }
+  else { TF.measure = b.dataset.m; renderTrend(); }
 });
 
 function runAdvisor() {
