@@ -61,6 +61,9 @@
   .ratio{font-size:.72rem;padding:.05rem .4rem;border-radius:99px;border:1px solid var(--line)}
   .ratio.heavy{border-color:var(--warn);color:var(--warn)}
   .ratio.light{border-color:var(--accent);color:var(--accent)}
+  .fx{background:#0d1117;border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:5px;
+      padding:.5rem .8rem;margin:.6rem 0 .9rem;font-size:.78rem;color:var(--dim);font-family:ui-monospace,monospace}
+  .fx b{color:var(--txt);font-family:inherit}
   code{background:#0d1117;padding:.1rem .35rem;border-radius:3px;font-size:.85em}
 </style>
 </head>
@@ -96,6 +99,7 @@
     <button class="tab" data-sec="open">Open-weight share</button>
     <button class="tab" data-sec="apps">By app category</button>
     <button class="tab" data-sec="advisor">Routing advisor</button>
+    <button class="tab" data-sec="method">Formulas &amp; method</button>
     <button class="tab" data-sec="unknown">Known unknowns</button>
   </div>
 
@@ -105,12 +109,14 @@
       <h2>Volume versus value</h2>
       <p class="sub" style="margin-bottom:.5rem">Each dot is a vendor. Horizontal axis is share of tokens routed; vertical axis is share of estimated spend. The diagonal is parity — a vendor sitting on it earns exactly in proportion to the volume it moves. <b>Above the line, a vendor captures more value than volume. Below it, the reverse.</b> Dot size is absolute token volume.</p>
       <div class="chart" style="height:420px"><canvas id="c-scatter"></canvas></div>
+      <div class="fx"><b>x</b> = vendor tokens ÷ (attributed + other) &nbsp;·&nbsp; <b>y</b> = vendor est. USD ÷ total est. USD &nbsp;·&nbsp; <b>ratio</b> = y ÷ x &nbsp;·&nbsp; dot area ∝ absolute tokens</div>
       <div class="src" id="scatter-note"></div>
     </div>
 
     <div class="panel">
       <h2>Token share and spend share, side by side</h2>
       <div class="chart" style="height:420px"><canvas id="c-paired"></canvas></div>
+      <div class="fx"><b>token share</b> = vendor tokens ÷ (attributed + other), recomputed for the selected window &nbsp;·&nbsp; <b>spend share</b> = vendor est. USD ÷ total, fixed 90-day window</div>
       <div id="excl" class="src"></div>
       <div class="src" id="src-tokens"></div>
     </div>
@@ -132,6 +138,7 @@
         <span style="color:var(--dim);font-size:.8rem;margin-left:.8rem">Window is set globally above.</span>
       </div>
       <div class="chart" style="height:440px"><canvas id="c-trend"></canvas></div>
+      <div class="fx"><b>share %</b> = weekly vendor tokens ÷ (all vendors + other) that week &nbsp;·&nbsp; weekly buckets, week starting Sunday UTC &nbsp;·&nbsp; top 8 ranked within the selected window</div>
       <div class="src" id="trend-note"></div>
     </div>
     <div class="panel">
@@ -147,6 +154,7 @@
       <p class="sub">OpenRouter classifies traffic by <em>task</em> — what the request was doing — not by industry. Both measures are shown throughout, because they disagree sharply: <b>Code and Agent work is 27% of requests but 72.5% of tokens.</b> A view showing only tokens would tell you this market is dominated by coding; by request count it's dominated by classification, extraction and chat.</p>
       <div class="caveat" id="task-window" style="border-left-color:var(--accent)"></div>
       <div class="chart" style="height:300px"><canvas id="c-tasks"></canvas></div>
+      <div class="fx"><b>request share</b> and <b>token share</b> are published directly by /api/v1/classifications/task as fractions of <i>classified</i> traffic &nbsp;·&nbsp; ×100 only, no further arithmetic</div>
       <div class="src" id="src-tasks"></div>
     </div>
     <div id="cards"></div>
@@ -160,6 +168,7 @@
         <b>This is not enterprise spend.</b> No public API publishes enterprise API spend. This figure is computed here by multiplying token volume by each model's published list price. It covers gateway-routed traffic only and uses list rates, which negotiated enterprise contracts sit below.
       </div>
       <div class="chart"><canvas id="c-spend"></canvas></div>
+      <div class="fx"><b>per model</b> = tokens × (prompt price + completion price) ÷ 2 &nbsp;·&nbsp; joined on <b>canonical_slug</b> &nbsp;·&nbsp; covers 98.9% of attributed tokens &nbsp;·&nbsp; list prices, not negotiated rates</div>
       <div id="spend-assume" class="src"></div>
     </div>
   </section>
@@ -171,6 +180,7 @@
       <div class="caveat" id="open-headline" style="border-left-color:var(--good)"></div>
       <p class="sub">Measured on <b>share of routed token traffic</b>, not on how many models exist — one high-volume open model outweighs many rarely-used ones. Window: <span class="winbadge"></span></p>
       <div class="chart" style="height:170px"><canvas id="c-open"></canvas></div>
+      <div class="fx"><b>share</b> = Σ tokens of models in that licence class ÷ (attributed + other) &nbsp;·&nbsp; measured on <b>token traffic</b>, not model count</div>
       <div id="open-method" style="margin-top:1rem"></div>
     </div>
     <div class="panel">
@@ -207,6 +217,24 @@
         </div>
         <div id="adv-out"><div class="empty">Enter a workload mix to see a suggested split.</div></div>
       </div>
+    </div>
+  </section>
+
+  <!-- ───────── method ───────── -->
+  <section id="sec-method" class="sec">
+    <div class="panel">
+      <h2>Every formula on this page</h2>
+      <p class="sub">Each figure, the arithmetic behind it, and where the inputs come from. Anything you cannot recompute from this table is a defect — the raw API responses are committed in <code>data/</code> and the implementation is in <code>scripts/compute.py</code>.</p>
+      <div id="formulas"></div>
+    </div>
+    <div class="panel">
+      <h2>Definitions that change the answer</h2>
+      <div id="defs"></div>
+    </div>
+    <div class="panel">
+      <h2>Reconciliation</h2>
+      <p class="sub">Shares must close to 100%. If they don't, something is being dropped silently.</p>
+      <div id="recon"></div>
     </div>
   </section>
 
@@ -396,11 +424,113 @@ function render() {
     ], ow.models.slice(0, 30));
   }
 
+  renderMethod();
+
   // unknowns
   document.getElementById('t-unknown').innerHTML =
     d.known_unknowns.map(u=>`<li><b>${esc(u.question)}</b><span>${esc(u.why)}</span></li>`).join('');
 
   if (d.series) applyWindow(); else renderTokenPanels();
+}
+
+/* ── formulas & method ───────────────────────────────────────────────────── */
+const FORMULAS = [
+  { fig: 'Vendor token share',
+    f: 'vendor tokens ÷ (attributed + other)',
+    src: '/api/v1/datasets/rankings-daily',
+    note: 'Denominator includes the API\'s aggregated "other" row for models outside the daily top 50. Dropping it would inflate every share.' },
+  { fig: 'Model token share',
+    f: 'model tokens ÷ (attributed + other)',
+    src: '/api/v1/datasets/rankings-daily',
+    note: 'Same denominator as vendor share, so the two are directly comparable.' },
+  { fig: 'Unattributed traffic %',
+    f: 'excluded ÷ (denominator + excluded)',
+    src: '/api/v1/datasets/rankings-daily',
+    note: 'Expressed against all visible traffic, so it answers "how much was set aside", not "how much of what remains".' },
+  { fig: 'Estimated routed spend (per model)',
+    f: 'model tokens × (prompt price + completion price) ÷ 2',
+    src: 'rankings-daily × /api/v1/models',
+    note: 'Joined on canonical_slug, not id — the ranking endpoint emits dated permaslugs. Price coverage: 98.9% of attributed tokens.' },
+  { fig: 'Spend share',
+    f: 'vendor estimated USD ÷ total estimated USD',
+    src: 'derived',
+    note: 'Relative shape is the load-bearing part; the absolute dollar figure uses list prices and is indicative only.' },
+  { fig: 'Value-to-volume ratio (scatter)',
+    f: 'spend share ÷ token share',
+    src: 'derived',
+    note: 'Above 1.0 = captures more value than volume. This is the parity diagonal on the scatter.' },
+  { fig: 'Open-weight share',
+    f: 'Σ tokens of models in that licence class ÷ denominator',
+    src: 'rankings-daily × HuggingFace × vendor policy',
+    note: 'Measured on token traffic, not model count. One high-volume open model outweighs many rarely-used ones.' },
+  { fig: 'Task request share',
+    f: 'published directly by the API as a fraction of classified traffic',
+    src: '/api/v1/classifications/task',
+    note: 'Multiplied by 100 only. The unclassified bucket is excluded from the denominator by the API.' },
+  { fig: 'Task token share',
+    f: 'published directly by the API',
+    src: '/api/v1/classifications/task',
+    note: 'Same basis as request share, so the two can be compared within a task.' },
+  { fig: 'Category token-intensity ratio',
+    f: 'category token share ÷ category request share',
+    src: 'derived',
+    note: 'Above 1.0 = consumes more tokens than its share of calls. Code is 2.96×, Data is 0.28×.' },
+  { fig: 'Per-model share within a task',
+    f: 'published by the API as tag_usage_share / tag_token_share',
+    src: '/api/v1/classifications/task',
+    note: 'Share of that task\'s requests and tokens. Only the top models are returned, so these sum to less than 100%.' },
+  { fig: 'Windowed vendor share (time selector)',
+    f: 'Σ weekly vendor tokens in window ÷ (Σ all vendors + Σ other) in the same window',
+    src: 'rankings-daily, bucketed weekly',
+    note: 'Recomputed client-side per window. Vendors are ranked within the window, so a 4-week view shows who is large now.' },
+  { fig: 'Movers (percentage-point change)',
+    f: 'share in final week − share in first week of the window',
+    src: 'derived',
+    note: 'Percentage points, not percent change — a move from 2% to 4% is +2pp, not +100%.' },
+  { fig: 'Advisor cost estimate',
+    f: 'Σ (segment tokens × blended list price of the suggested model)',
+    src: 'derived from /api/v1/models',
+    note: 'Excludes negotiated discounts, caching and batch pricing. A starting hypothesis, not a quote.' },
+];
+
+const DEFINITIONS = [
+  { t: 'Attributed vs unattributed',
+    d: 'Models under an anonymous or stealth provider (stealth/*, openrouter/ox-*, openrouter/owl-*) are excluded from every denominator, because vendor and licence cannot be established. Their volume is reported separately so the effect is visible rather than hidden.' },
+  { t: 'The "other" row',
+    d: 'The API aggregates every model outside the daily top 50 into a single row. It stays in the denominator — it is real traffic — but is never attributed to a vendor.' },
+  { t: 'Open vs open-restricted vs proprietary vs unknown',
+    d: 'Open = permissive licence (MIT, Apache-2.0) confirmed on the model\'s HuggingFace repo. Open-restricted = weights published under a bespoke licence carrying use restrictions. Proprietary = the vendor publishes no weights for that line (Anthropic entirely; Google\'s Gemini line, as distinct from Gemma; OpenAI apart from gpt-oss). Unknown means unestablished — never a guess, and never a stand-in for proprietary.' },
+  { t: 'Why token counts are not comparable across vendors',
+    d: 'Each provider counts with its own tokenizer, so summing tokens across vendors adds unlike units. This is OpenRouter\'s own caveat. Request share is offered alongside as the more comparable measure.' },
+  { t: 'Why the task tab has a different window',
+    d: 'The classifications endpoint publishes a trailing 7-day window only; no other window is supported. Every other tab follows the global selector.' },
+];
+
+function renderMethod() {
+  document.getElementById('formulas').innerHTML = table([
+    { label:'Figure', get:r=>`<b>${esc(r.fig)}</b>` },
+    { label:'Formula', get:r=>`<code>${esc(r.f)}</code>` },
+    { label:'Source', get:r=>`<span style="color:var(--dim)">${esc(r.src)}</span>` },
+    { label:'Note', get:r=>`<span style="color:var(--dim);font-size:.92em">${esc(r.note)}</span>` },
+  ], FORMULAS);
+
+  document.getElementById('defs').innerHTML =
+    DEFINITIONS.map(x=>`<div style="margin-bottom:.9rem"><b>${esc(x.t)}</b><div style="color:var(--dim);font-size:.9rem">${esc(x.d)}</div></div>`).join('');
+
+  const ts = DATA.token_share, t = ts.totals, r = ts.reconciliation || {};
+  const vs = ts.by_vendor.reduce((a,v)=>a+v.share_pct, 0);
+  const os = 100*t.other_tokens/t.denominator;
+  document.getElementById('recon').innerHTML = table([
+    { label:'Component', get:x=>x.k },
+    { label:'Tokens', num:1, get:x=>fmtN(x.v) },
+    { label:'Share', num:1, get:x=>x.p==null?'—':x.p.toFixed(3)+'%' },
+  ], [
+    { k:'Listed vendors', v:r.listed_vendors ?? 0, p:null },
+    { k:'Tail vendors (aggregated)', v:r.tail_vendors ?? 0, p:null },
+    { k:'"other" row from API', v:t.other_tokens, p:os },
+    { k:'Denominator', v:t.denominator, p:vs+os },
+    { k:'Excluded (unattributed)', v:t.unattributed_tokens, p:t.unattributed_pct_of_visible },
+  ]) + `<p class="src">Vendor shares plus the "other" row sum to <b>${(vs+os).toFixed(3)}%</b>. The residual is the API's own rounding of published values, not dropped data. Reconciliation asserted in code: <code>listed + tail + other == denominator</code> → <b>${r.sums_exactly ? 'holds' : 'FAILS'}</b>.</p>`;
 }
 
 /* ── share over time ─────────────────────────────────────────────────────── */
