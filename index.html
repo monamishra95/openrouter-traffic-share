@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Share of Traffic on OpenRouter</title>
+<meta name="description" content="What models developers actually run, measured from OpenRouter's CC BY 4.0 Data API. Gateway traffic only — not market share.">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root{--bg:#0d1117;--panel:#161b22;--line:#30363d;--txt:#e6edf3;--dim:#8b949e;--accent:#58a6ff;--warn:#d29922;--good:#3fb950}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--txt);font:15px/1.6 ui-sans-serif,system-ui,-apple-system,sans-serif}
+  .wrap{max-width:1180px;margin:0 auto;padding:2rem 1.5rem 5rem}
+  h1{font-size:1.9rem;margin:0 0 .3rem;letter-spacing:-.02em}
+  h2{font-size:1.15rem;margin:0 0 .75rem}
+  .sub{color:var(--dim);margin:0 0 1.5rem}
+  .caveat{background:#1c2128;border:1px solid var(--line);border-left:3px solid var(--warn);border-radius:6px;padding:.9rem 1.1rem;margin-bottom:.75rem;font-size:.9rem}
+  .caveat b{color:var(--warn)}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:1.25rem;margin-bottom:1.25rem}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:1.25rem}
+  @media(max-width:860px){.grid2{grid-template-columns:1fr}}
+  table{width:100%;border-collapse:collapse;font-size:.86rem}
+  th{text-align:left;color:var(--dim);font-weight:600;padding:.4rem .5rem;border-bottom:1px solid var(--line)}
+  td{padding:.4rem .5rem;border-bottom:1px solid #21262d}
+  .num{text-align:right;font-variant-numeric:tabular-nums}
+  .src{font-size:.75rem;color:var(--dim);margin-top:.75rem;line-height:1.5}
+  .src a{color:var(--accent);text-decoration:none}
+  .tabs{display:flex;gap:.4rem;flex-wrap:wrap;margin-bottom:1.1rem}
+  .tab{background:var(--panel);border:1px solid var(--line);color:var(--dim);padding:.45rem .9rem;border-radius:6px;cursor:pointer;font-size:.86rem}
+  .tab.on{background:#1f6feb22;border-color:var(--accent);color:var(--txt)}
+  .sec{display:none}.sec.on{display:block}
+  .chart{height:340px;position:relative}
+  .pill{display:inline-block;font-size:.7rem;padding:.12rem .5rem;border-radius:99px;border:1px solid var(--line);color:var(--dim);margin-left:.4rem}
+  .pill.derived{border-color:var(--warn);color:var(--warn)}
+  .unknown{border-left:3px solid #f85149}
+  .unknown li{margin-bottom:.7rem}
+  .unknown b{display:block;color:var(--txt)}
+  .unknown span{color:var(--dim);font-size:.88rem}
+  input,select{background:#0d1117;border:1px solid var(--line);color:var(--txt);border-radius:5px;padding:.4rem .6rem;font-size:.88rem;width:100%}
+  label{font-size:.8rem;color:var(--dim);display:block;margin-bottom:.25rem}
+  .field{margin-bottom:.75rem}
+  button{background:#238636;border:0;color:#fff;padding:.55rem 1.1rem;border-radius:6px;cursor:pointer;font-weight:600;font-size:.88rem}
+  .empty{color:var(--dim);padding:2rem;text-align:center;border:1px dashed var(--line);border-radius:6px}
+  code{background:#0d1117;padding:.1rem .35rem;border-radius:3px;font-size:.85em}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>Share of Traffic on OpenRouter</h1>
+  <p class="sub">What models developers actually run — measured, not estimated. <span id="window-label"></span></p>
+
+  <!-- Caveats render above every chart. AC-3. -->
+  <div class="caveat">
+    <b>This is one gateway, not the market.</b> These figures describe traffic routed through OpenRouter. Most enterprise inference goes directly to Anthropic, OpenAI or Google Cloud and never appears here. OpenRouter states this themselves: the rankings <em>"describe traffic routed through OpenRouter, not the whole market and not usage on a model provider's own API."</em>
+  </div>
+  <div class="caveat">
+    <b>Tokens from different vendors are not directly comparable.</b> Each provider counts with its own tokenizer, so a token in one row is not the same unit as a token in another. Summing across vendors adds unlike quantities — which is what every "AI market share by tokens" figure silently does. Request share, in the second tab, is the more comparable measure.
+  </div>
+
+  <div class="tabs">
+    <button class="tab on" data-sec="tokens">Token share</button>
+    <button class="tab" data-sec="requests">Request share by task</button>
+    <button class="tab" data-sec="spend">Estimated spend <span class="pill derived">derived</span></button>
+    <button class="tab" data-sec="open">Open-weight share</button>
+    <button class="tab" data-sec="apps">By app category</button>
+    <button class="tab" data-sec="advisor">Routing advisor</button>
+    <button class="tab" data-sec="unknown">Known unknowns</button>
+  </div>
+
+  <!-- ───────── tokens ───────── -->
+  <section id="sec-tokens" class="sec on">
+    <div class="panel">
+      <h2>Token share by vendor</h2>
+      <div class="chart"><canvas id="c-vendor"></canvas></div>
+      <div id="excl" class="src"></div>
+      <div class="src" id="src-tokens"></div>
+    </div>
+    <div class="panel">
+      <h2>Top models by tokens processed</h2>
+      <div id="t-models"></div>
+    </div>
+  </section>
+
+  <!-- ───────── requests ───────── -->
+  <section id="sec-requests" class="sec">
+    <div class="panel">
+      <h2>Traffic by task classification</h2>
+      <p class="sub" style="margin-bottom:1rem">OpenRouter classifies traffic by <em>task</em> — what the request was doing — not by industry. Share of requests is shown alongside share of tokens, because the two differ sharply: agentic work consumes far more tokens per request than chat.</p>
+      <div class="chart"><canvas id="c-tasks"></canvas></div>
+      <div id="t-tasks" style="margin-top:1.25rem"></div>
+      <div class="src" id="src-tasks"></div>
+    </div>
+  </section>
+
+  <!-- ───────── spend ───────── -->
+  <section id="sec-spend" class="sec">
+    <div class="panel">
+      <h2>Estimated routed spend <span class="pill derived">derived figure</span></h2>
+      <div class="caveat" style="border-left-color:#f85149">
+        <b>This is not enterprise spend.</b> No public API publishes enterprise API spend. This figure is computed here by multiplying token volume by each model's published list price. It covers gateway-routed traffic only and uses list rates, which negotiated enterprise contracts sit below.
+      </div>
+      <div class="chart"><canvas id="c-spend"></canvas></div>
+      <div id="spend-assume" class="src"></div>
+    </div>
+  </section>
+
+  <!-- ───────── open weight ───────── -->
+  <section id="sec-open" class="sec">
+    <div class="panel">
+      <h2>Open-weight versus proprietary</h2>
+      <div class="grid2">
+        <div class="chart"><canvas id="c-open"></canvas></div>
+        <div id="open-method"></div>
+      </div>
+    </div>
+    <div class="panel">
+      <h2>Classification per model</h2>
+      <div id="t-open"></div>
+    </div>
+  </section>
+
+  <!-- ───────── apps ───────── -->
+  <section id="sec-apps" class="sec">
+    <div class="panel">
+      <h2>Leading apps by category</h2>
+      <p class="sub" style="margin-bottom:1rem">OpenRouter's four app categories, with subcategories as tagged by the apps themselves.</p>
+      <div id="t-apps"></div>
+      <div class="src" id="src-apps"></div>
+    </div>
+  </section>
+
+  <!-- ───────── advisor ───────── -->
+  <section id="sec-advisor" class="sec">
+    <div class="panel">
+      <h2>Routing advisor</h2>
+      <div class="caveat">
+        <b>What this does not know.</b> This suggests a routing split from gateway traffic patterns and public list pricing. It has no view of your latency requirements, compliance obligations, data-residency constraints, or negotiated rates. Treat the output as a starting hypothesis for a routing conversation, not a procurement decision.
+      </div>
+      <div class="grid2">
+        <div>
+          <div class="field"><label>Monthly tokens (millions)</label><input id="adv-vol" type="number" value="500" min="1"></div>
+          <div class="field"><label>Coding / agentic development — % of volume</label><input id="adv-code" type="number" value="40" min="0" max="100"></div>
+          <div class="field"><label>Agent workflows / tool use — %</label><input id="adv-agent" type="number" value="25" min="0" max="100"></div>
+          <div class="field"><label>Document &amp; data processing — %</label><input id="adv-data" type="number" value="20" min="0" max="100"></div>
+          <div class="field"><label>General chat &amp; creative — %</label><input id="adv-gen" type="number" value="15" min="0" max="100"></div>
+          <button onclick="runAdvisor()">Suggest a routing split</button>
+        </div>
+        <div id="adv-out"><div class="empty">Enter a workload mix to see a suggested split.</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ───────── unknowns ───────── -->
+  <section id="sec-unknown" class="sec">
+    <div class="panel unknown">
+      <h2>What this dashboard cannot tell you</h2>
+      <p class="sub">Every other page on this subject fills these gaps with numbers from sources that estimated them. These are the questions the underlying data structurally cannot answer, and why.</p>
+      <ul id="t-unknown" style="padding-left:1.1rem"></ul>
+    </div>
+  </section>
+
+  <p class="src" style="margin-top:2rem">
+    Built with <a href="https://github.com/monamishra95/multi-agent-harness">multi-agent-harness</a>.
+    All figures computed from live APIs and committed to this repository — no hand-entered numbers.
+    <span id="gen-stamp"></span>
+  </p>
+</div>
+
+<script>
+const COLORS = ['#58a6ff','#3fb950','#d29922','#f85149','#a371f7','#39c5cf','#db61a2','#e3b341','#7ee787','#ff7b72','#79c0ff','#ffa657'];
+let DATA = null;
+
+document.querySelectorAll('.tab').forEach(t => t.onclick = () => {
+  document.querySelectorAll('.tab').forEach(x => x.classList.remove('on'));
+  document.querySelectorAll('.sec').forEach(x => x.classList.remove('on'));
+  t.classList.add('on');
+  document.getElementById('sec-' + t.dataset.sec).classList.add('on');
+});
+
+const fmtN = n => n >= 1e12 ? (n/1e12).toFixed(2)+'T' : n >= 1e9 ? (n/1e9).toFixed(1)+'B' : n >= 1e6 ? (n/1e6).toFixed(1)+'M' : n.toLocaleString();
+const fmtUSD = n => n >= 1e6 ? '$'+(n/1e6).toFixed(2)+'M' : n >= 1e3 ? '$'+(n/1e3).toFixed(1)+'k' : '$'+n.toFixed(2);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+function table(cols, rows) {
+  return `<table><thead><tr>${cols.map(c=>`<th class="${c.num?'num':''}">${c.label}</th>`).join('')}</tr></thead>
+    <tbody>${rows.map(r=>`<tr>${cols.map(c=>`<td class="${c.num?'num':''}">${c.get(r)}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
+}
+
+function provenance(p) {
+  if (!p) return '';
+  return `${esc(p.citation || '')}<br>Retrieved ${esc((p.fetched_at||'').slice(0,10))} · refresh: ${esc(p.cadence||'')} · <a href="${esc(p.source_url||'#')}" target="_blank">source</a>`;
+}
+
+function donut(id, labels, values, title) {
+  const el = document.getElementById(id); if (!el) return;
+  new Chart(el.getContext('2d'), {
+    type: 'doughnut',
+    data: { labels, datasets: [{ data: values, backgroundColor: COLORS, borderColor: '#161b22', borderWidth: 2 }] },
+    options: { responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ position:'right', labels:{ color:'#e6edf3', boxWidth:12, font:{size:11} } },
+        title:{ display:!!title, text:title, color:'#8b949e' },
+        tooltip:{ callbacks:{ label: c => `${c.label}: ${c.parsed.toFixed(2)}%` } } } }
+  });
+}
+
+function render() {
+  const d = DATA;
+  const ts = d.token_share;
+
+  document.getElementById('window-label').textContent =
+    `${ts.window.start} to ${ts.window.end} · ${ts.window.days} days`;
+  document.getElementById('gen-stamp').textContent =
+    'Data as of ' + ((d.generated_from['tokens-daily.json']||{}).as_of || '').slice(0,10) + '.';
+
+  // token share
+  const vend = ts.by_vendor.slice(0, 10);
+  donut('c-vendor', vend.map(v=>v.key), vend.map(v=>v.share_pct));
+  const t = ts.totals;
+  document.getElementById('excl').innerHTML =
+    `<b style="color:#d29922">Excluded from these shares:</b> ${fmtN(t.unattributed_tokens)} tokens from anonymous or stealth providers — <b>${t.unattributed_pct_of_visible}% of visible traffic</b>. ${esc(ts.exclusion_rule)}`;
+  document.getElementById('src-tokens').innerHTML = provenance(d.generated_from['tokens-daily.json']);
+  document.getElementById('t-models').innerHTML = table([
+    {label:'Model', get:r=>esc(r.key)},
+    {label:'Tokens', num:1, get:r=>fmtN(r.tokens)},
+    {label:'Share', num:1, get:r=>r.share_pct.toFixed(2)+'%'},
+  ], ts.by_model.slice(0, 25));
+
+  // tasks
+  if (d.task_segmentation) {
+    const seg = d.task_segmentation;
+    const mc = seg.macro_categories || [];
+    const el = document.getElementById('c-tasks');
+    new Chart(el.getContext('2d'), {
+      type:'bar',
+      data:{ labels: mc.map(m=>m.label), datasets:[
+        { label:'Share of requests', data: mc.map(m=>+(m.usage_share*100).toFixed(2)), backgroundColor:'#58a6ff' },
+        { label:'Share of tokens',   data: mc.map(m=>+(m.token_share*100).toFixed(2)), backgroundColor:'#3fb950' } ]},
+      options:{ responsive:true, maintainAspectRatio:false,
+        scales:{ x:{ ticks:{color:'#8b949e'}, grid:{color:'#21262d'} },
+                 y:{ ticks:{color:'#8b949e', callback:v=>v+'%'}, grid:{color:'#21262d'} } },
+        plugins:{ legend:{ labels:{color:'#e6edf3', boxWidth:12} } } }
+    });
+    document.getElementById('t-tasks').innerHTML = table([
+      {label:'Task', get:r=>esc(r.display_name)},
+      {label:'Category', get:r=>esc(r.macro_category)},
+      {label:'Requests', num:1, get:r=>r.usage_share_pct.toFixed(2)+'%'},
+      {label:'Tokens', num:1, get:r=>r.token_share_pct.toFixed(2)+'%'},
+      {label:'Leading model', get:r=>esc((r.top_models[0]||{}).id || '—')},
+    ], seg.classifications);
+    document.getElementById('src-tasks').innerHTML =
+      esc(seg.note) + '<br>' + provenance(d.generated_from['tasks.json']);
+  } else {
+    document.getElementById('t-tasks').innerHTML = '<div class="empty">tasks.json not present — run the fetch script.</div>';
+  }
+
+  // spend
+  if (d.estimated_spend) {
+    const sp = d.estimated_spend;
+    const bv = sp.by_vendor.slice(0, 10);
+    donut('c-spend', bv.map(v=>v.vendor), bv.map(v=>v.share_pct));
+    document.getElementById('spend-assume').innerHTML =
+      '<b>How this is calculated:</b><ul style="margin:.5rem 0 0;padding-left:1.1rem">' +
+      sp.assumptions.map(a=>`<li>${esc(a)}</li>`).join('') + '</ul>' +
+      `<div style="margin-top:.6rem">Estimated total over the window: <b>${fmtUSD(sp.total_usd)}</b>` +
+      (sp.models_without_pricing.length ? ` · ${sp.models_without_pricing.length} model(s) had no published price and are excluded.` : '') + '</div>';
+  }
+
+  // open weight
+  if (d.open_weight) {
+    const ow = d.open_weight;
+    donut('c-open', ow.buckets.map(b=>b.classification), ow.buckets.map(b=>b.share_pct));
+    document.getElementById('open-method').innerHTML =
+      `<h2 style="font-size:.95rem">Method</h2><p class="src" style="margin-top:0">${esc(ow.method)}</p>`;
+    document.getElementById('t-open').innerHTML = table([
+      {label:'Model', get:r=>esc(r.model)},
+      {label:'Classification', get:r=>esc(r.classification)},
+      {label:'Evidence', get:r=>{
+        const e=r.evidence||{};
+        return e.source ? `<a href="${esc(e.source)}" target="_blank">${esc(e.license||'licence')}</a>` : esc(e.note||'—');
+      }},
+      {label:'Tokens', num:1, get:r=>fmtN(r.tokens)},
+    ], ow.models.slice(0, 30));
+  }
+
+  // unknowns
+  document.getElementById('t-unknown').innerHTML =
+    d.known_unknowns.map(u=>`<li><b>${esc(u.question)}</b><span>${esc(u.why)}</span></li>`).join('');
+}
+
+function runAdvisor() {
+  const out = document.getElementById('adv-out');
+  if (!DATA || !DATA.estimated_spend) { out.innerHTML = '<div class="empty">Pricing data not loaded.</div>'; return; }
+  const vol = +document.getElementById('adv-vol').value * 1e6;
+  const mix = { code:+document.getElementById('adv-code').value, agent:+document.getElementById('adv-agent').value,
+                data:+document.getElementById('adv-data').value, general:+document.getElementById('adv-gen').value };
+  const total = Object.values(mix).reduce((a,b)=>a+b,0);
+  if (Math.abs(total - 100) > 0.5) { out.innerHTML = `<div class="empty">Percentages total ${total}% — they need to sum to 100.</div>`; return; }
+
+  // Leading models per macro-category, taken from live task classifications.
+  const seg = DATA.task_segmentation;
+  const leaders = {};
+  if (seg) for (const c of seg.classifications) {
+    const m = (c.top_models||[])[0]; if (!m) continue;
+    if (!leaders[c.macro_category] || c.token_share_pct > leaders[c.macro_category].share)
+      leaders[c.macro_category] = { id:m.id, share:c.token_share_pct, task:c.display_name };
+  }
+  const price = {};
+  for (const r of DATA.estimated_spend.by_model) price[r.model] = r.blended_price_per_token;
+  const rows = Object.entries(mix).filter(([,p])=>p>0).map(([k,p]) => {
+    const L = leaders[k]; const tok = vol * p/100;
+    const pr = L ? price[L.id] : null;
+    return { segment:k, pct:p, tokens:tok, model:L?L.id:'no leader in data',
+             evidence:L?`leads ${L.task} with ${L.share}% of that task's tokens`:'no classification data for this segment',
+             cost: pr!=null ? tok*pr : null };
+  });
+  const known = rows.filter(r=>r.cost!=null);
+  const mixed = known.reduce((a,r)=>a+r.cost,0);
+  const prices = Object.values(price).filter(p=>p>0);
+  const premium = prices.length ? vol * Math.max(...prices) : null;
+
+  out.innerHTML = table([
+    {label:'Segment', get:r=>esc(r.segment)},
+    {label:'Share', num:1, get:r=>r.pct+'%'},
+    {label:'Suggested model', get:r=>esc(r.model)},
+    {label:'Est. cost', num:1, get:r=>r.cost!=null?fmtUSD(r.cost):'—'},
+  ], rows) +
+  `<div class="src" style="margin-top:1rem">
+     <b>Why these models:</b><ul style="margin:.4rem 0;padding-left:1.1rem">${rows.map(r=>`<li>${esc(r.segment)}: ${esc(r.evidence)}</li>`).join('')}</ul>
+     Estimated monthly cost with this split: <b>${fmtUSD(mixed)}</b>.
+     ${premium!=null?`Routing the same volume entirely to the most expensive model in the data would cost approximately <b>${fmtUSD(premium)}</b>.`:''}
+     <br><br>Costs use published list prices and blended prompt/completion rates. They exclude negotiated discounts, caching, and batch pricing.
+   </div>`;
+}
+
+fetch('data/computed.json')
+  .then(r => { if (!r.ok) throw new Error('computed.json not found'); return r.json(); })
+  .then(j => { DATA = j; render(); })
+  .catch(e => {
+    document.querySelectorAll('.sec').forEach(s => {
+      if (s.id !== 'sec-unknown') s.innerHTML =
+        `<div class="panel"><div class="empty">No data yet.<br><br>Run <code>python scripts/fetch_all.py</code> then <code>python scripts/compute.py</code> to populate <code>data/computed.json</code>.</div></div>`;
+    });
+  });
+</script>
+</body>
+</html>

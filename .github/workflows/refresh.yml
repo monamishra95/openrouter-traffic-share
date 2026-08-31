@@ -1,0 +1,57 @@
+name: refresh data
+
+# Daily refresh. Every source here genuinely updates daily — OpenRouter's
+# rankings dataset updates continuously, and the model registry changes as
+# models are added or repriced. Nothing on a slower cadence is polled daily,
+# because a cron over annual data manufactures an impression of freshness the
+# data does not have.
+
+on:
+  schedule:
+    - cron: '0 6 * * *'   # 06:00 UTC daily
+  workflow_dispatch:       # manual "refresh now"
+
+permissions:
+  contents: write
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+
+      - run: pip install requests
+
+      - name: Fetch all feeds
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+        run: python scripts/fetch_all.py --days 90
+
+      - name: Recompute derived figures
+        run: python scripts/compute.py --print
+
+      - name: Golden tests must still pass against the new data
+        run: python tests/test_compute.py
+
+      - name: Commit only if content genuinely changed
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/
+          if git diff --cached --quiet; then
+            echo "No change in data — nothing to commit."
+            exit 0
+          fi
+          # fetched_at always differs; content_hash does not. If every changed
+          # file differs only in fetched_at, treat it as no genuine change.
+          if git diff --cached -U0 | grep -E '^\+' | grep -vE '^\+\+\+' | grep -qv 'fetched_at'; then
+            git commit -m "data: refresh $(date -u +%Y-%m-%d)"
+            git push
+          else
+            echo "Only fetch timestamps changed — skipping commit."
+            git reset
+          fi

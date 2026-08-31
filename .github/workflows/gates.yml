@@ -1,0 +1,29 @@
+name: gates
+
+# The harness gates, applied to this project. Secrets are the live risk here —
+# the build handles an API key, so G3 blocks first and always.
+
+on: [push, pull_request, workflow_dispatch]
+
+jobs:
+  gates:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - uses: monamishra95/multi-agent-harness@v0.3.0
+        with:
+          mode: 'release'
+          scan-history: 'true'
+
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+      - name: Golden tests
+        run: python tests/test_compute.py

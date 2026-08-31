@@ -1,0 +1,63 @@
+tier: T1
+build_mode: staged
+
+criteria:
+  - id: AC-1
+    text: Every rendered figure derives from an API response committed under data/, with no hand-entered numbers anywhere in the source
+    verify: fact-audit
+
+  - id: AC-2
+    text: Share percentages recomputed independently from raw token counts match rendered values within 0.1 percentage points
+    verify: golden-test
+
+  - id: AC-3
+    text: The gateway-scope caveat and the tokenizer-incomparability caveat both render above the fold, before any chart
+    verify: golden-test
+
+  - id: AC-4
+    text: Unattributed and stealth-provider models are excluded from every share denominator, and the excluded volume is reported separately with its magnitude visible
+    verify: golden-test
+
+  - id: AC-5
+    text: Use-cases with no measurable source appear in a Known Unknowns panel stating why, and appear in no chart
+    verify: golden-test
+
+  - id: AC-6
+    text: >
+      The spend figure is labelled derived, displays its assumptions, and is never
+      presented as enterprise spend — the phrase may appear only inside an explicit
+      denial. Headings, labels and legends must not contain it.
+    verify: golden-test
+    # Originally written as "the phrase appears nowhere in the UI", which failed
+    # on the disclaimer "This is not enterprise spend" — the one place the phrase
+    # belongs. The check was right to fire; the criterion was imprecise.
+
+  - id: AC-7
+    text: Every data panel carries its source link, the CC BY 4.0 attribution line with meta.as_of, and its refresh cadence
+    verify: citation-lint
+
+  - id: AC-8
+    text: No API key appears in the client bundle, the repository, or git history
+    verify: security-scan
+
+  - id: AC-9
+    text: The advisor displays its boundary statement — no latency, compliance, data-residency or negotiated-rate inputs — adjacent to its output
+    verify: golden-test
+
+  - id: AC-10
+    text: The refresh workflow writes content-hashed data files and commits only when content genuinely changed
+    verify: smoke
+
+  - id: AC-11
+    text: The dashboard renders and all panels populate with the narrative API unreachable
+    verify: smoke
+
+  - id: AC-12
+    text: Open-weight classification is rule-based and documented; every model carries its classification and the licence source it came from
+    verify: fact-audit
+
+# manual criteria: 0 of 12
+#
+# Note on AC-2: the golden test recomputes shares from a committed fixture of raw
+# API output, so it fails if the rendering layer and the computation layer ever
+# disagree — the defect class most likely to slip past a human reading a chart.
