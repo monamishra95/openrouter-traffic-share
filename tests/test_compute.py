@@ -337,15 +337,62 @@ def test_normalised_entries_never_carry_a_key_without_a_value():
     assert compute._normalise_top_models(None) == []
 
 
+def test_a_further_upstream_rename_fails_loudly_instead_of_emptying_the_page():
+    """The normaliser must not silently absorb a spelling it does not know.
+
+    Dropping an unreadable entry is right per-entry and wrong in aggregate: a
+    third rename would drop all of them, render empty cards, and leave the daily
+    refresh green. That is the defect again, one level up.
+    """
+    import compute
+    doc = {"raw": {"data": {
+        "as_of": "2026-01-01", "window_days": 7, "macro_categories": [],
+        "classifications": [{
+            "tag": "t", "display_name": "T", "macro_category": "general",
+            "usage_share": 0.5, "token_share": 0.5,
+            "models": [{"id": "a/b", "some_future_name": 0.5, "another": 0.5}],
+        }],
+    }}}
+    try:
+        compute.task_segmentation(doc)
+    except compute.UpstreamContractChanged as e:
+        assert "renamed" in str(e) and "a/b" not in str(e).split("Keys actually present")[0]
+        assert "some_future_name" in str(e), "the error must name the keys actually present"
+        return
+    raise AssertionError(
+        "task_segmentation accepted a payload whose per-model fields it could not "
+        "read; a future rename would blank the cards with a green build"
+    )
+
+
+def test_upstream_sending_no_models_is_not_an_error():
+    """Absent is legitimate; unreadable is not. Don't conflate them."""
+    import compute
+    doc = {"raw": {"data": {
+        "as_of": "2026-01-01", "window_days": 7, "macro_categories": [],
+        "classifications": [{
+            "tag": "t", "display_name": "T", "macro_category": "general",
+            "usage_share": 0.5, "token_share": 0.5, "models": [],
+        }],
+    }}}
+    out = compute.task_segmentation(doc)
+    assert out["classifications"][0]["top_models"] == []
+
+
 def test_committed_output_matches_the_owned_contract():
     """Whatever is committed must be readable by the page as shipped."""
     live = Path(__file__).resolve().parent.parent / "data" / "computed.json"
     if not live.exists():
         return                       # clean checkout before a fetch; nothing to check
     seg = json.loads(live.read_text(encoding="utf-8")).get("task_segmentation", {})
-    entries = [x for c in seg.get("classifications", []) for x in c.get("top_models", [])]
-    if not entries:
-        return
+    cls = seg.get("classifications", [])
+    if not cls:
+        return                       # no task feed in this snapshot
+    assert any(c.get("top_models") for c in cls), (
+        "classifications are present but every top_models list is empty — upstream "
+        "has probably renamed the per-model fields again (DEF-2026-09-21-001)"
+    )
+    entries = [x for c in cls for x in c.get("top_models", [])]
     for x in entries:
         readable = ({"id", "req_pct", "tok_pct"} <= set(x)
                     or {"id", "tag_usage_share", "tag_token_share"} <= set(x))

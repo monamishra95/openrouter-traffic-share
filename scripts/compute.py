@@ -287,22 +287,50 @@ def _normalise_top_models(models):
     return out
 
 
+class UpstreamContractChanged(RuntimeError):
+    """Raised when a feed still parses but no longer means what we read it as."""
+
+
 def task_segmentation(tasks_doc):
     if not tasks_doc:
         return None
     d = tasks_doc["raw"]["data"]
+    raw_cls = d.get("classifications", [])
+    classifications = [
+        {"tag": c["tag"], "display_name": c["display_name"],
+         "macro_category": c["macro_category"],
+         "usage_share_pct": round(c["usage_share"] * 100, 2),
+         "token_share_pct": round(c["token_share"] * 100, 2),
+         "top_models": _normalise_top_models(c.get("models", []))[:5]}
+        for c in raw_cls
+    ]
+
+    # _normalise_top_models drops entries it cannot interpret, which is correct
+    # per-entry but hides a total failure: if OpenRouter renames these fields a
+    # THIRD time, every entry is dropped, the cards render empty, the refresh
+    # workflow stays green, and nobody is told. That is the same silent-failure
+    # mode as the defect this normaliser was written to fix. So distinguish
+    # "upstream sent no models" from "upstream sent models we could not read",
+    # and fail the build on the latter — loudly, at the earliest point, where
+    # the daily workflow will surface it as a red run rather than a blank page.
+    offered = sum(len(c.get("models") or []) for c in raw_cls)
+    kept = sum(len(c["top_models"]) for c in classifications)
+    if offered and not kept:
+        sample = next((m for c in raw_cls for m in (c.get("models") or [])), {})
+        raise UpstreamContractChanged(
+            f"{offered} per-model entries received from the task feed and none were "
+            f"readable. Known field spellings: "
+            f"{[n for v in _MODEL_FIELD_ALIASES.values() for n, _ in v]}. "
+            f"Keys actually present: {sorted(sample)}. "
+            "Upstream has likely renamed these fields again — extend "
+            "_MODEL_FIELD_ALIASES in compute.py (see DEF-2026-09-21-001)."
+        )
+
     return {
         "as_of": d.get("as_of"),
         "window_days": d.get("window_days"),
         "macro_categories": d.get("macro_categories", []),
-        "classifications": [
-            {"tag": c["tag"], "display_name": c["display_name"],
-             "macro_category": c["macro_category"],
-             "usage_share_pct": round(c["usage_share"] * 100, 2),
-             "token_share_pct": round(c["token_share"] * 100, 2),
-             "top_models": _normalise_top_models(c.get("models", []))[:5]}
-            for c in d.get("classifications", [])
-        ],
+        "classifications": classifications,
         "note": ("Shares are of classified traffic; the unclassified bucket is excluded from the "
                  "denominator. Data is sampled, so absolute volumes are not available."),
     }

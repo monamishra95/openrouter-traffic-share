@@ -1,0 +1,20 @@
+# Line-ending policy.
+#
+# This repo had neither .gitattributes nor core.autocrlf, so a Windows checkout
+# rewrote every line of every text file and `git status` reported whole files as
+# modified when nothing had changed — 2,391 phantom insertions and 2,391 phantom
+# deletions across three files. That is not cosmetic: it buries the real diff,
+# makes review meaningless, and risks committing a stale data snapshot over a
+# newer one because the file "looks changed anyway".
+#
+# Normalise to LF in the repository; Git still checks out native endings where
+# the platform wants them.
+* text=auto eol=lf
+
+# Committed API snapshots are content-hashed for change detection. Pin them to
+# LF so a line-ending rewrite can never masquerade as new data.
+data/*.json  text eol=lf
+
+# Windows batch files genuinely need CRLF.
+*.bat text eol=crlf
+*.cmd text eol=crlf
