@@ -244,6 +244,49 @@ def estimated_spend(shares, registry_doc):
 
 # ── task segmentation ────────────────────────────────────────────────────────
 
+# Upstream renamed the per-model fields inside each classification's `models`
+# list — `req_pct`/`tok_pct` (percent) became `tag_usage_share`/`tag_token_share`
+# (0–1 fractions) — and this function used to pass that list through untouched.
+# The rendering layer was therefore reading names owned by OpenRouter, so a
+# rename on their side silently blanked every category card on the dashboard.
+#
+# Everything else in this file already normalises before it leaves: the
+# classification shares two lines below are converted from fractions to
+# percentages here rather than in the page. The nested model list was the one
+# place that didn't, and it is the one place that broke.
+#
+# Normalise to a contract this project owns: {id, req_pct, tok_pct}, both in
+# percent. Accept either upstream spelling so old committed data and new pulls
+# both render, and drop entries we cannot interpret rather than emitting a key
+# with no value behind it.
+
+_MODEL_FIELD_ALIASES = {
+    "req_pct": [("req_pct", 1), ("tag_usage_share", 100), ("usage_share", 100)],
+    "tok_pct": [("tok_pct", 1), ("tag_token_share", 100), ("token_share", 100)],
+}
+
+
+def _normalise_top_models(models):
+    out = []
+    for m in models or []:
+        mid = m.get("id") or m.get("model") or m.get("slug")
+        if not mid:
+            continue
+        entry = {"id": mid}
+        ok = True
+        for target, candidates in _MODEL_FIELD_ALIASES.items():
+            for name, scale in candidates:
+                v = m.get(name)
+                if isinstance(v, (int, float)) and not isinstance(v, bool):
+                    entry[target] = round(v * scale, 2)
+                    break
+            else:
+                ok = False
+        if ok:
+            out.append(entry)
+    return out
+
+
 def task_segmentation(tasks_doc):
     if not tasks_doc:
         return None
@@ -257,7 +300,7 @@ def task_segmentation(tasks_doc):
              "macro_category": c["macro_category"],
              "usage_share_pct": round(c["usage_share"] * 100, 2),
              "token_share_pct": round(c["token_share"] * 100, 2),
-             "top_models": c.get("models", [])[:5]}
+             "top_models": _normalise_top_models(c.get("models", []))[:5]}
             for c in d.get("classifications", [])
         ],
         "note": ("Shares are of classified traffic; the unclassified bucket is excluded from the "

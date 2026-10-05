@@ -302,6 +302,77 @@ def test_known_unknowns_explain_tokenizer_incomparability():
     assert "tokenizer" in text and "comparable" in text, "tokenizer caveat missing"
 
 
+# --- Regression: DEF-2026-09-21-001, rendering-layer field contract ---------
+#
+# index.html read `req_pct` / `tok_pct` from each per-task top_models entry.
+# compute.py has never emitted those names; it emits `tag_usage_share` /
+# `tag_token_share`. Every category card threw on its first model row and the
+# page's single catch block reported "No data yet — run fetch_all.py", so a
+# correct, fully-populated dataset presented as an empty one.
+#
+# Every test above this line checks compute.py against itself. None of them
+# could see this, because the defect lived in the seam BETWEEN compute.py and
+# index.html — the one place nothing was asserting. These two tests hold that
+# seam from both sides.
+
+def _index_html_text():
+    return (Path(__file__).resolve().parent.parent / "index.html").read_text(encoding="utf-8")
+
+
+def test_normalises_both_upstream_model_field_spellings():
+    """The rename that caused the defect must now pass through unnoticed."""
+    import compute
+    old = [{"id": "a/b", "req_pct": 9.2, "tok_pct": 3.7}]              # pre-rename
+    new = [{"id": "a/b", "tag_usage_share": 0.092, "tag_token_share": 0.037}]  # post-rename
+    assert compute._normalise_top_models(old) == [{"id": "a/b", "req_pct": 9.2, "tok_pct": 3.7}]
+    assert compute._normalise_top_models(new) == [{"id": "a/b", "req_pct": 9.2, "tok_pct": 3.7}]
+
+
+def test_normalised_entries_never_carry_a_key_without_a_value():
+    """Half-populated rows are dropped, not emitted for the page to trip over."""
+    import compute
+    assert compute._normalise_top_models([{"id": "a/b", "req_pct": 9.2}]) == []
+    assert compute._normalise_top_models([{"req_pct": 1, "tok_pct": 2}]) == []
+    assert compute._normalise_top_models([{"id": "a/b", "req_pct": None, "tok_pct": 2}]) == []
+    assert compute._normalise_top_models(None) == []
+
+
+def test_committed_output_matches_the_owned_contract():
+    """Whatever is committed must be readable by the page as shipped."""
+    live = Path(__file__).resolve().parent.parent / "data" / "computed.json"
+    if not live.exists():
+        return                       # clean checkout before a fetch; nothing to check
+    seg = json.loads(live.read_text(encoding="utf-8")).get("task_segmentation", {})
+    entries = [x for c in seg.get("classifications", []) for x in c.get("top_models", [])]
+    if not entries:
+        return
+    for x in entries:
+        readable = ({"id", "req_pct", "tok_pct"} <= set(x)
+                    or {"id", "tag_usage_share", "tag_token_share"} <= set(x))
+        assert readable, f"top_models entry {sorted(x)} is readable by neither spelling"
+
+
+def test_page_reads_model_shares_through_the_tolerant_accessor():
+    """index.html must not index these fields directly again."""
+    html = _index_html_text()
+    assert "modelPct(" in html, "the tolerant accessor is gone from index.html"
+    for direct in ("x.req_pct.toFixed", "x.tok_pct.toFixed",
+                   "x.tag_usage_share.toFixed", "x.tag_token_share.toFixed"):
+        assert direct not in html, (
+            f"index.html dereferences `{direct}` directly; an upstream rename or a "
+            "missing value blanks the page again (DEF-2026-09-21-001)"
+        )
+
+
+def test_render_failure_is_not_reported_as_missing_data():
+    """The catch block must distinguish a failed load from a failed render."""
+    html = _index_html_text()
+    assert "Data loaded, but rendering failed" in html, (
+        "the fetch/render catch block collapses both failure modes into "
+        "'No data yet', which is what hid DEF-2026-09-21-001"
+    )
+
+
 if __name__ == "__main__":
     for name, fn in sorted(list(globals().items())):
         if name.startswith("test_") and callable(fn):

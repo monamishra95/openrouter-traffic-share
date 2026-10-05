@@ -25,8 +25,7 @@ Before there's any data, the page tells you to run the fetch rather than renderi
 | Request share by task | Share of requests and tokens per task classification | `/api/v1/classifications/task` |
 | Estimated spend | **Derived**: tokens × published list price | `rankings-daily` × `/api/v1/models` |
 | Open-weight share | Traffic split by model licence | OpenRouter × HuggingFace Hub |
-| By app category | Leading apps in coding, productivity, creative, entertainment | `/api/v1/datasets/app-rankings` |
-| Routing advisor | Suggested model split and cost for a workload mix | computed from the above |
+| Share over time | Weekly vendor share across a selectable window | `/api/v1/datasets/rankings-daily` |
 
 ## Three rules this project is built on
 
@@ -47,10 +46,10 @@ The daily workflow commits only when content genuinely changed — a re-fetch of
 - **Single-source dependency.** Four of five feeds come from OpenRouter. A licence or API change stops most of this.
 - **Gateway sample.** Direct-to-provider enterprise traffic is invisible.
 - **List pricing only.** The spend estimate can't see negotiated rates, which are typically lower.
-- **The advisor is a starting point.** It knows nothing about latency requirements, compliance, data residency, or your contracts.
+- **Upstream field names change.** OpenRouter renamed the per-model fields inside the task feed on 2026-09-20. Payloads are now normalised onto a contract this repo owns before anything renders, and tests assert it from both sides — see `DEF-2026-09-21-001`.
 
 ## Attribution
 
 Rankings and classification data © OpenRouter, licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). Each panel carries the citation line with its `as_of` timestamp, as the Data API specifies.
 
-Built with [multi-agent-harness](https://github.com/monamishra95/multi-agent-harness). See `spec.md` and `acceptance.yaml` for the build contract.
+Built by Mona's [multi-agent-harness](https://github.com/monamishra95/multi-agent-harness). See `spec.md` and `acceptance.yaml` for the build contract.

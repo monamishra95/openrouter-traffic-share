@@ -242,6 +242,23 @@ const fmtN = n => n >= 1e12 ? (n/1e12).toFixed(2)+'T' : n >= 1e9 ? (n/1e9).toFix
 const fmtUSD = n => n >= 1e6 ? '$'+(n/1e6).toFixed(2)+'M' : n >= 1e3 ? '$'+(n/1e3).toFixed(1)+'k' : '$'+n.toFixed(2);
 const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
+// Per-task model shares. compute.py normalises these to req_pct / tok_pct in
+// percent, but OpenRouter has renamed the underlying fields once already
+// (tag_usage_share / tag_token_share, as 0-1 fractions) and any committed
+// snapshot taken before that normalisation still carries the upstream names.
+// Accept either, and return a dash rather than throwing — one unreadable
+// number must never blank the page, which is exactly what it did before.
+function modelPct(x, which) {
+  const cands = which === 'req'
+    ? [['req_pct',1], ['tag_usage_share',100], ['usage_share',100]]
+    : [['tok_pct',1], ['tag_token_share',100], ['token_share',100]];
+  for (const [k, scale] of cands) {
+    const v = x[k];
+    if (typeof v === 'number' && isFinite(v)) return (v*scale).toFixed(1)+'%';
+  }
+  return '—';
+}
+
 function table(cols, rows) {
   return `<table><thead><tr>${cols.map(c=>`<th class="${c.num?'num':''}">${c.label}</th>`).join('')}</tr></thead>
     <tbody>${rows.map(r=>`<tr>${cols.map(c=>`<td class="${c.num?'num':''}">${c.get(r)}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
@@ -357,9 +374,9 @@ function render() {
           <div class="task">
             <div class="task-h"><b>${esc(t.display_name)}</b>
               <span>${t.usage_share_pct.toFixed(1)}% req · ${t.token_share_pct.toFixed(1)}% tok</span></div>
-            ${t.top_models.map((x,i) => `
+            ${(t.top_models||[]).map((x,i) => `
               <div class="mdl"><code>${i+1}. ${esc(x.id)}</code>
-                <span>${x.req_pct.toFixed(1)}% / ${x.tok_pct.toFixed(1)}%</span></div>`).join('')}
+                <span>${modelPct(x,'req')} / ${modelPct(x,'tok')}</span></div>`).join('')}
           </div>`).join('')}
         <div class="src" style="margin-top:.4rem">Per-model figures are share of that task's requests / tokens.</div>
       </div>`;
@@ -661,14 +678,25 @@ document.addEventListener('click', e => {
 });
 
 
-fetch('data/computed.json')
-  .then(r => { if (!r.ok) throw new Error('computed.json not found'); return r.json(); })
-  .then(j => { DATA = j; render(); })
+// A single catch that reports "no data" for BOTH a failed load and a failed
+// render is how a one-field naming mismatch masqueraded as an empty dataset
+// for days: the data was present and correct the whole time. Separate the two
+// states and surface the real exception — a page that lies about why it is
+// blank costs more than a page that is blank.
+let LOADED = false;
+fetch('data/computed.json', { cache: 'no-store' })
+  .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status + ' fetching data/computed.json'); return r.json(); })
+  .then(j => { DATA = j; LOADED = true; render(); })
   .catch(e => {
+    const msg = LOADED
+      ? `<b style="color:#f85149">Data loaded, but rendering failed.</b><br><br>` +
+        `<code style="white-space:pre-wrap">${String(e && e.message || e)}</code><br><br>` +
+        `<span style="opacity:.7">The dataset in <code>data/</code> is intact — this is a bug in the rendering layer, not missing data.</span>`
+      : `No data yet.<br><br>Run <code>python scripts/fetch_all.py</code> then <code>python scripts/compute.py</code> to populate <code>data/computed.json</code>.`;
     document.querySelectorAll('.sec').forEach(s => {
-      if (s.id !== 'sec-method') s.innerHTML =
-        `<div class="panel"><div class="empty">No data yet.<br><br>Run <code>python scripts/fetch_all.py</code> then <code>python scripts/compute.py</code> to populate <code>data/computed.json</code>.</div></div>`;
+      if (s.id !== 'sec-method') s.innerHTML = `<div class="panel"><div class="empty">${msg}</div></div>`;
     });
+    console.error('[dashboard]', e);
   });
 </script>
 </body>
