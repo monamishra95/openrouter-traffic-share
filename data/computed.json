@@ -2,170 +2,170 @@
   "generated_from": {
     "tokens-daily.json": {
       "source_url": "https://openrouter.ai/rankings",
-      "citation": "Source: OpenRouter (openrouter.ai/rankings), as of 2026-10-19T11:33:46.235Z. Licensed under CC BY 4.0.",
-      "as_of": "2026-10-19T11:33:46.235Z",
+      "citation": "Source: OpenRouter (openrouter.ai/rankings), as of 2026-10-20T10:38:54.007Z. Licensed under CC BY 4.0.",
+      "as_of": "2026-10-20T10:38:54.007Z",
       "cadence": "daily",
-      "fetched_at": "2026-10-19T11:33:47Z",
-      "content_hash": "fbbd019a57dfce1d",
-      "notes": "Top 50 models per day plus aggregated 'other' row. Window 2026-07-21..2026-10-18."
+      "fetched_at": "2026-10-20T10:38:54Z",
+      "content_hash": "da71a2d207360e90",
+      "notes": "Top 50 models per day plus aggregated 'other' row. Window 2026-07-22..2026-10-19."
     },
     "model-registry.json": {
       "source_url": "https://openrouter.ai/models",
-      "citation": "Source: OpenRouter (openrouter.ai/rankings), as of 2026-10-19T11:33:44Z. Licensed under CC BY 4.0.",
-      "as_of": "2026-10-19T11:33:44Z",
+      "citation": "Source: OpenRouter (openrouter.ai/rankings), as of 2026-10-20T10:38:53Z. Licensed under CC BY 4.0.",
+      "as_of": "2026-10-20T10:38:53Z",
       "cadence": "daily",
-      "fetched_at": "2026-10-19T11:33:44Z",
-      "content_hash": "65b63079164e040b",
+      "fetched_at": "2026-10-20T10:38:53Z",
+      "content_hash": "204961daa8c2ce13",
       "notes": "Model metadata and list pricing. Basis for provenance and the derived spend estimate."
     },
     "open-weights.json": {
       "source_url": "https://huggingface.co",
       "citation": "Source: https://huggingface.co",
-      "as_of": "2026-10-19T11:34:34Z",
+      "as_of": "2026-10-20T10:39:41Z",
       "cadence": "daily",
-      "fetched_at": "2026-10-19T11:34:34Z",
-      "content_hash": "d9baf1498f5234d1",
+      "fetched_at": "2026-10-20T10:39:41Z",
+      "content_hash": "953c1a36543f42b8",
       "notes": "Licence and download metadata. Models without a public HF repo are listed as unmatched, not assumed proprietary."
     },
     "tasks.json": {
       "source_url": "https://openrouter.ai/rankings",
-      "citation": "Source: OpenRouter (openrouter.ai/rankings), as of 2026-10-18. Licensed under CC BY 4.0.",
-      "as_of": "2026-10-18",
+      "citation": "Source: OpenRouter (openrouter.ai/rankings), as of 2026-10-19. Licensed under CC BY 4.0.",
+      "as_of": "2026-10-19",
       "cadence": "daily (7-day trailing window)",
-      "fetched_at": "2026-10-19T11:33:47Z",
-      "content_hash": "829a74106fa487ab",
+      "fetched_at": "2026-10-20T10:38:55Z",
+      "content_hash": "8bc9c85a7680afe3",
       "notes": "Sampled data: relative shares only, absolute volumes not exposed."
     }
   },
   "token_share": {
     "window": {
       "days": 90,
-      "start": "2026-07-21",
-      "end": "2026-10-18"
+      "start": "2026-07-22",
+      "end": "2026-10-19"
     },
     "totals": {
-      "attributed_tokens": 1297567234188139,
-      "other_tokens": 93361967015679,
+      "attributed_tokens": 1312326619927771,
+      "other_tokens": 94487997205412,
       "unattributed_tokens": 84931470136492,
-      "denominator": 1390929201203818,
-      "total_including_unattributed": 1475860671340310,
-      "unattributed_pct_of_visible": 5.755
+      "denominator": 1406814617133183,
+      "total_including_unattributed": 1491746087269675,
+      "unattributed_pct_of_visible": 5.693
     },
     "by_vendor": [
       {
         "key": "deepseek",
-        "tokens": 343637854063751,
-        "share_pct": 24.706
+        "tokens": 349958715632424,
+        "share_pct": 24.876
       },
       {
         "key": "openai",
-        "tokens": 157575565160771,
-        "share_pct": 11.329
+        "tokens": 158664257071124,
+        "share_pct": 11.278
       },
       {
         "key": "z-ai",
-        "tokens": 151764350930112,
-        "share_pct": 10.911
+        "tokens": 153822544138727,
+        "share_pct": 10.934
       },
       {
         "key": "tencent",
-        "tokens": 143520179061255,
-        "share_pct": 10.318
+        "tokens": 144794645085612,
+        "share_pct": 10.292
       },
       {
         "key": "xiaomi",
-        "tokens": 111032474458858,
-        "share_pct": 7.983
+        "tokens": 111056482216982,
+        "share_pct": 7.894
       },
       {
         "key": "google",
-        "tokens": 76633604696491,
-        "share_pct": 5.51
+        "tokens": 76779684787529,
+        "share_pct": 5.458
       },
       {
         "key": "anthropic",
-        "tokens": 74109476519603,
-        "share_pct": 5.328
+        "tokens": 74987720244142,
+        "share_pct": 5.33
       },
       {
         "key": "nvidia",
-        "tokens": 67670097082151,
-        "share_pct": 4.865
+        "tokens": 68604835308211,
+        "share_pct": 4.877
       },
       {
         "key": "minimax",
-        "tokens": 29742504494851,
-        "share_pct": 2.138
+        "tokens": 30653292550769,
+        "share_pct": 2.179
       },
       {
         "key": "stepfun",
-        "tokens": 27460592180354,
-        "share_pct": 1.974
+        "tokens": 27153011249028,
+        "share_pct": 1.93
       },
       {
         "key": "moonshotai",
-        "tokens": 21581756942278,
-        "share_pct": 1.552
-      },
-      {
-        "key": "poolside",
-        "tokens": 15901228771111,
-        "share_pct": 1.143
+        "tokens": 21583188782085,
+        "share_pct": 1.534
       },
       {
         "key": "meta",
-        "tokens": 15657037239599,
-        "share_pct": 1.126
+        "tokens": 16134169006494,
+        "share_pct": 1.147
+      },
+      {
+        "key": "poolside",
+        "tokens": 15966950997191,
+        "share_pct": 1.135
       },
       {
         "key": "typesafe",
-        "tokens": 13120468309914,
-        "share_pct": 0.943
+        "tokens": 13752884768042,
+        "share_pct": 0.978
       },
       {
         "key": "upstage",
-        "tokens": 12151227030177,
-        "share_pct": 0.874
+        "tokens": 12383762009830,
+        "share_pct": 0.88
       },
       {
         "key": "qwen",
-        "tokens": 11131437523204,
-        "share_pct": 0.8
+        "tokens": 11238852621297,
+        "share_pct": 0.799
       },
       {
         "key": "inclusionai",
-        "tokens": 10833276652945,
-        "share_pct": 0.779
+        "tokens": 10812355049889,
+        "share_pct": 0.769
       },
       {
         "key": "x-ai",
-        "tokens": 5014062349591,
-        "share_pct": 0.36
+        "tokens": 4940366899454,
+        "share_pct": 0.351
       },
       {
         "key": "dots-studio",
-        "tokens": 3807152397776,
-        "share_pct": 0.274
+        "tokens": 3895889438566,
+        "share_pct": 0.277
       },
       {
         "key": "mistralai",
-        "tokens": 1297137988078,
-        "share_pct": 0.093
+        "tokens": 1250215016604,
+        "share_pct": 0.089
       },
       {
         "key": "cohere",
-        "tokens": 1216045568365,
-        "share_pct": 0.087
+        "tokens": 1183092286867,
+        "share_pct": 0.084
       },
       {
         "key": "nex-agi",
         "tokens": 1094524191876,
-        "share_pct": 0.079
+        "share_pct": 0.078
       },
       {
         "key": "thinkingmachines",
         "tokens": 1069509429535,
-        "share_pct": 0.077
+        "share_pct": 0.076
       },
       {
         "key": "perplexity",
@@ -176,253 +176,253 @@
     "by_model": [
       {
         "key": "deepseek/deepseek-v4.1-flash-20260910",
-        "tokens": 139696666192891,
-        "share_pct": 10.043
+        "tokens": 142500065982866,
+        "share_pct": 10.129
       },
       {
         "key": "deepseek/deepseek-v4-flash-20260731",
-        "tokens": 101998994999917,
-        "share_pct": 7.333
+        "tokens": 102625427649322,
+        "share_pct": 7.295
       },
       {
         "key": "z-ai/glm-5.3-flash-20260826",
-        "tokens": 95029650632804,
-        "share_pct": 6.832
+        "tokens": 96771795419949,
+        "share_pct": 6.879
       },
       {
         "key": "openai/gpt-5.6-luna-20260709",
-        "tokens": 81976450038837,
-        "share_pct": 5.894
+        "tokens": 82155599998268,
+        "share_pct": 5.84
       },
       {
         "key": "tencent/hy4-preview-20260827",
-        "tokens": 79058083668736,
-        "share_pct": 5.684
+        "tokens": 80427153623306,
+        "share_pct": 5.717
       },
       {
         "key": "xiaomi/mimo-v2.5-20260422",
-        "tokens": 65875531588005,
-        "share_pct": 4.736
+        "tokens": 64475229354202,
+        "share_pct": 4.583
       },
       {
         "key": "tencent/hy3-20260706",
-        "tokens": 64462095392519,
-        "share_pct": 4.634
+        "tokens": 64367491462306,
+        "share_pct": 4.575
       },
       {
         "key": "deepseek/deepseek-v4-flash-20260423",
-        "tokens": 60249215655133,
-        "share_pct": 4.332
+        "tokens": 59768635282596,
+        "share_pct": 4.249
       },
       {
         "key": "nvidia/nemotron-3-ultra-550b-a55b-20260604:free",
-        "tokens": 53994877277922,
-        "share_pct": 3.882
+        "tokens": 54578507881289,
+        "share_pct": 3.88
       },
       {
         "key": "xiaomi/mimo-v2.6-flash-20260921",
-        "tokens": 36522502289844,
-        "share_pct": 2.626
+        "tokens": 37753063418186,
+        "share_pct": 2.684
       },
       {
         "key": "z-ai/glm-5.2-20260616",
-        "tokens": 31160308872637,
-        "share_pct": 2.24
+        "tokens": 30731150451290,
+        "share_pct": 2.184
       },
       {
         "key": "z-ai/glm-5.3-20260816",
-        "tokens": 25080809720942,
-        "share_pct": 1.803
+        "tokens": 25826016563759,
+        "share_pct": 1.836
       },
       {
         "key": "openai/gpt-6-luna-20260922",
-        "tokens": 22324507087081,
-        "share_pct": 1.605
+        "tokens": 23202708926786,
+        "share_pct": 1.649
       },
       {
         "key": "deepseek/deepseek-v4-pro-20260423",
-        "tokens": 21469238385818,
-        "share_pct": 1.544
+        "tokens": 21160079674907,
+        "share_pct": 1.504
       },
       {
         "key": "moonshotai/kimi-k3-20260715",
-        "tokens": 20429026997720,
-        "share_pct": 1.469
+        "tokens": 20521999244396,
+        "share_pct": 1.459
       },
       {
         "key": "stepfun/step-5-preview-20261008",
         "tokens": 20293436655399,
-        "share_pct": 1.459
+        "share_pct": 1.443
       },
       {
         "key": "minimax/minimax-m3-20260531",
-        "tokens": 19835544502801,
-        "share_pct": 1.426
+        "tokens": 19693879671924,
+        "share_pct": 1.4
       },
       {
         "key": "openai/gpt-5.6-sol-20260709",
-        "tokens": 15959281252879,
-        "share_pct": 1.147
-      },
-      {
-        "key": "anthropic/claude-opus-5-20260723",
-        "tokens": 15439096672086,
-        "share_pct": 1.11
-      },
-      {
-        "key": "poolside/laguna-s-2.1-20260720:free",
-        "tokens": 15330382956467,
-        "share_pct": 1.102
+        "tokens": 15879054469085,
+        "share_pct": 1.129
       },
       {
         "key": "anthropic/claude-opus-5.5-20260921",
-        "tokens": 14717926295254,
-        "share_pct": 1.058
+        "tokens": 15795252871840,
+        "share_pct": 1.123
+      },
+      {
+        "key": "anthropic/claude-opus-5-20260723",
+        "tokens": 15569934873918,
+        "share_pct": 1.107
+      },
+      {
+        "key": "poolside/laguna-s-2.1-20260720:free",
+        "tokens": 15441209267506,
+        "share_pct": 1.098
       },
       {
         "key": "anthropic/claude-sonnet-5-20260630",
-        "tokens": 14372063823191,
-        "share_pct": 1.033
+        "tokens": 14283141286509,
+        "share_pct": 1.015
       },
       {
         "key": "google/gemini-3.8-flash-20260902",
-        "tokens": 13955119232991,
-        "share_pct": 1.003
+        "tokens": 14170952498101,
+        "share_pct": 1.007
       },
       {
         "key": "meta/muse-spark-1.3-contributor-20260902",
-        "tokens": 13653848479780,
-        "share_pct": 0.982
+        "tokens": 14130980246675,
+        "share_pct": 1.004
       },
       {
         "key": "typesafe/jev-1.13-20260917",
-        "tokens": 12524050541911,
-        "share_pct": 0.9
+        "tokens": 12946192493695,
+        "share_pct": 0.92
       },
       {
         "key": "google/gemini-3.7-flash-20260813",
-        "tokens": 11158616069219,
-        "share_pct": 0.802
+        "tokens": 11219949589060,
+        "share_pct": 0.798
       },
       {
         "key": "google/gemini-3-flash-preview-20251217",
-        "tokens": 11038529959393,
-        "share_pct": 0.794
+        "tokens": 10996803865887,
+        "share_pct": 0.782
       },
       {
         "key": "deepseek/deepseek-v4-pro-20260813",
-        "tokens": 9961034419418,
-        "share_pct": 0.716
+        "tokens": 10082628551998,
+        "share_pct": 0.717
       },
       {
         "key": "upstage/solar-pro4-20260810",
-        "tokens": 9890795798725,
-        "share_pct": 0.711
+        "tokens": 9969459833003,
+        "share_pct": 0.709
       },
       {
         "key": "google/gemini-2.5-flash-lite",
-        "tokens": 8976469925344,
-        "share_pct": 0.645
+        "tokens": 8970006844777,
+        "share_pct": 0.638
+      },
+      {
+        "key": "nvidia/nemotron-3.5-lightning-20260807:free",
+        "tokens": 8171608796172,
+        "share_pct": 0.581
       },
       {
         "key": "minimax/minimax-m3-20260531:free",
         "tokens": 8170111314412,
-        "share_pct": 0.587
+        "share_pct": 0.581
       },
       {
-        "key": "nvidia/nemotron-3.5-lightning-20260807:free",
-        "tokens": 8041182078406,
-        "share_pct": 0.578
+        "key": "deepseek/deepseek-v4.1-flash-20261017",
+        "tokens": 7336091079273,
+        "share_pct": 0.521
       },
       {
         "key": "anthropic/claude-4.6-sonnet-20260217",
-        "tokens": 7343510265767,
-        "share_pct": 0.528
+        "tokens": 7210054672825,
+        "share_pct": 0.513
       },
       {
         "key": "stepfun/step-3.7-flash-20260528",
-        "tokens": 7167155524955,
-        "share_pct": 0.515
+        "tokens": 6859574593629,
+        "share_pct": 0.488
       },
       {
         "key": "google/gemini-3.6-flash-20260721",
         "tokens": 6729210272681,
-        "share_pct": 0.484
+        "share_pct": 0.478
       },
       {
         "key": "openai/gpt-oss-120b",
-        "tokens": 6595151026159,
-        "share_pct": 0.474
+        "tokens": 6601335456025,
+        "share_pct": 0.469
       },
       {
         "key": "google/gemini-3.1-flash-lite-20260507",
-        "tokens": 6204034586980,
-        "share_pct": 0.446
+        "tokens": 6180903778334,
+        "share_pct": 0.439
       },
       {
         "key": "openai/gpt-5.6-terra-20260709",
-        "tokens": 6045383701536,
-        "share_pct": 0.435
-      },
-      {
-        "key": "google/gemini-2.5-flash",
-        "tokens": 5981061095821,
-        "share_pct": 0.43
-      },
-      {
-        "key": "openai/gpt-6-astra-20260903",
-        "tokens": 5830068536097,
-        "share_pct": 0.419
+        "tokens": 6022229939234,
+        "share_pct": 0.428
       },
       {
         "key": "anthropic/claude-sonnet-5.5-20260928",
-        "tokens": 5654794131584,
-        "share_pct": 0.407
+        "tokens": 6004903880909,
+        "share_pct": 0.427
       },
       {
-        "key": "google/gemma-4-31b-it-20260402",
-        "tokens": 5298976152213,
-        "share_pct": 0.381
+        "key": "google/gemini-2.5-flash",
+        "tokens": 5892602366121,
+        "share_pct": 0.419
+      },
+      {
+        "key": "openai/gpt-6-astra-20260903",
+        "tokens": 5891677050793,
+        "share_pct": 0.419
       },
       {
         "key": "xiaomi/mimo-v2.6-pro-20260921",
-        "tokens": 5237503384753,
-        "share_pct": 0.377
+        "tokens": 5524622202811,
+        "share_pct": 0.393
       },
       {
-        "key": "anthropic/claude-4.8-opus-20260528",
-        "tokens": 5114075758480,
-        "share_pct": 0.368
-      },
-      {
-        "key": "nvidia/nemotron-3-super-120b-a12b-20230311:free",
-        "tokens": 4884313108651,
-        "share_pct": 0.351
+        "key": "google/gemma-4-31b-it-20260402",
+        "tokens": 5318483661961,
+        "share_pct": 0.378
       },
       {
         "key": "openai/gpt-6.1-sol-20260929",
-        "tokens": 4767620888478,
-        "share_pct": 0.343
+        "tokens": 5035255524178,
+        "share_pct": 0.358
+      },
+      {
+        "key": "nvidia/nemotron-3-super-120b-a12b-20230311:free",
+        "tokens": 4896341569411,
+        "share_pct": 0.348
+      },
+      {
+        "key": "anthropic/claude-4.8-opus-20260528",
+        "tokens": 4712802613105,
+        "share_pct": 0.335
       },
       {
         "key": "inclusionai/ling-3.0-flash-fin-20260827:free",
         "tokens": 4395839289028,
-        "share_pct": 0.316
+        "share_pct": 0.312
       },
       {
         "key": "deepseek/deepseek-v3.2-20251201",
-        "tokens": 4361963476550,
-        "share_pct": 0.314
+        "tokens": 4308530950254,
+        "share_pct": 0.306
       },
       {
         "key": "dots-studio/dots-3-note-preview-20260813:free",
-        "tokens": 3807152397776,
-        "share_pct": 0.274
-      },
-      {
-        "key": "deepseek/deepseek-v4.1-flash-20261017",
-        "tokens": 3723484472816,
-        "share_pct": 0.268
+        "tokens": 3895889438566,
+        "share_pct": 0.277
       }
     ],
     "exclusion_rule": "Models published under an anonymous or stealth provider are excluded from all share denominators because vendor and licence cannot be established. Their volume is reported above so the effect is visible."
@@ -431,24 +431,24 @@
     "buckets": [
       {
         "classification": "open",
-        "tokens": 737867556135168,
-        "share_pct": 53.049
+        "tokens": 746611358814881,
+        "share_pct": 53.071
       },
       {
         "classification": "unknown",
-        "tokens": 398280372836777,
-        "share_pct": 28.634
+        "tokens": 402519185452168,
+        "share_pct": 28.612
       },
       {
         "classification": "open-restricted",
-        "tokens": 85638817876862,
-        "share_pct": 6.157
+        "tokens": 86335332135478,
+        "share_pct": 6.137
       }
     ],
     "models": [
       {
         "model": "deepseek/deepseek-v4.1-flash-20260910",
-        "tokens": 139696666192891,
+        "tokens": 142500065982866,
         "classification": "open",
         "evidence": {
           "license": "mit",
@@ -457,7 +457,7 @@
       },
       {
         "model": "deepseek/deepseek-v4-flash-20260731",
-        "tokens": 101998994999917,
+        "tokens": 102625427649322,
         "classification": "open",
         "evidence": {
           "license": "mit",
@@ -466,7 +466,7 @@
       },
       {
         "model": "z-ai/glm-5.3-flash-20260826",
-        "tokens": 95029650632804,
+        "tokens": 96771795419949,
         "classification": "open",
         "evidence": {
           "license": "mit",
@@ -475,7 +475,7 @@
       },
       {
         "model": "openai/gpt-5.6-luna-20260709",
-        "tokens": 81976450038837,
+        "tokens": 82155599998268,
         "classification": "unknown",
         "evidence": {
           "note": "no public HuggingFace repo matched; not assumed proprietary"
@@ -483,7 +483,7 @@
       },
       {
         "model": "tencent/hy4-preview-20260827",
-        "tokens": 79058083668736,
+        "tokens": 80427153623306,
         "classification": "open",
         "evidence": {
           "license": "apache-2.0",
@@ -492,7 +492,7 @@
       },
       {
         "model": "xiaomi/mimo-v2.5-20260422",
-        "tokens": 65875531588005,
+        "tokens": 64475229354202,
         "classification": "open",
         "evidence": {
           "license": "mit",
@@ -501,7 +501,7 @@
       },
       {
         "model": "tencent/hy3-20260706",
-        "tokens": 64462095392519,
+        "tokens": 64367491462306,
         "classification": "open",
         "evidence": {
           "license": "apache-2.0",
@@ -510,7 +510,7 @@
       },
       {
         "model": "deepseek/deepseek-v4-flash-20260423",
-        "tokens": 60249215655133,
+        "tokens": 59768635282596,
         "classification": "open",
         "evidence": {
           "license": "mit",
@@ -519,7 +519,7 @@
       },
       {
         "model": "nvidia/nemotron-3-ultra-550b-a55b-20260604:free",
-        "tokens": 53994877277922,
+        "tokens": 54578507881289,
         "classification": "unknown",
         "evidence": {
           "note": "no public HuggingFace repo matched; not assumed proprietary"
@@ -527,7 +527,7 @@
       },
       {
         "model": "xiaomi/mimo-v2.6-flash-20260921",
-        "tokens": 36522502289844,
+        "tokens": 37753063418186,
         "classification": "open",
         "evidence": {
           "license": "mit",
@@ -536,7 +536,7 @@
       },
       {
         "model": "z-ai/glm-5.2-20260616",
-        "tokens": 31160308872637,
+        "tokens": 30731150451290,
         "classification": "open",
         "evidence": {
           "license": "mit",
@@ -545,7 +545,7 @@
       },
       {
         "model": "z-ai/glm-5.3-20260816",
-        "tokens": 25080809720942,
+        "tokens": 25826016563759,
         "classification": "open-restricted",
         "evidence": {
           "license": "other",
@@ -554,7 +554,7 @@
       },
       {
         "model": "openai/gpt-6-luna-20260922",
-        "tokens": 22324507087081,
+        "tokens": 23202708926786,
         "classification": "unknown",
         "evidence": {
           "note": "no public HuggingFace repo matched; not assumed proprietary"
@@ -562,7 +562,7 @@
       },
       {
         "model": "deepseek/deepseek-v4-pro-20260423",
-        "tokens": 21469238385818,
+        "tokens": 21160079674907,
         "classification": "open",
         "evidence": {
           "license": "mit",
@@ -571,7 +571,7 @@
       },
       {
         "model": "moonshotai/kimi-k3-20260715",
-        "tokens": 20429026997720,
+        "tokens": 20521999244396,
         "classification": "open-restricted",
         "evidence": {
           "license": "other",
@@ -589,7 +589,7 @@
       },
       {
         "model": "minimax/minimax-m3-20260531",
-        "tokens": 19835544502801,
+        "tokens": 19693879671924,
         "classification": "open-restricted",
         "evidence": {
           "license": "other",
@@ -598,23 +598,7 @@
       },
       {
         "model": "openai/gpt-5.6-sol-20260709",
-        "tokens": 15959281252879,
-        "classification": "unknown",
-        "evidence": {
-          "note": "no public HuggingFace repo matched; not assumed proprietary"
-        }
-      },
-      {
-        "model": "anthropic/claude-opus-5-20260723",
-        "tokens": 15439096672086,
-        "classification": "unknown",
-        "evidence": {
-          "note": "no public HuggingFace repo matched; not assumed proprietary"
-        }
-      },
-      {
-        "model": "poolside/laguna-s-2.1-20260720:free",
-        "tokens": 15330382956467,
+        "tokens": 15879054469085,
         "classification": "unknown",
         "evidence": {
           "note": "no public HuggingFace repo matched; not assumed proprietary"
@@ -622,7 +606,23 @@
       },
       {
         "model": "anthropic/claude-opus-5.5-20260921",
-        "tokens": 14717926295254,
+        "tokens": 15795252871840,
+        "classification": "unknown",
+        "evidence": {
+          "note": "no public HuggingFace repo matched; not assumed proprietary"
+        }
+      },
+      {
+        "model": "anthropic/claude-opus-5-20260723",
+        "tokens": 15569934873918,
+        "classification": "unknown",
+        "evidence": {
+          "note": "no public HuggingFace repo matched; not assumed proprietary"
+        }
+      },
+      {
+        "model": "poolside/laguna-s-2.1-20260720:free",
+        "tokens": 15441209267506,
         "classification": "unknown",
         "evidence": {
           "note": "no public HuggingFace repo matched; not assumed proprietary"
@@ -630,7 +630,7 @@
       },
       {
         "model": "anthropic/claude-sonnet-5-20260630",
-        "tokens": 14372063823191,
+        "tokens": 14283141286509,
         "classification": "unknown",
         "evidence": {
           "note": "no public HuggingFace repo matched; not assumed proprietary"
@@ -638,7 +638,7 @@
       },
       {
         "model": "google/gemini-3.8-flash-20260902",
-        "tokens": 13955119232991,
+        "tokens": 14170952498101,
         "classification": "unknown",
         "evidence": {
           "note": "no public HuggingFace repo matched; not assumed proprietary"
@@ -646,7 +646,7 @@
       },
       {
         "model": "meta/muse-spark-1.3-contributor-20260902",
-        "tokens": 13653848479780,
+        "tokens": 14130980246675,
         "classification": "unknown",
         "evidence": {
           "note": "no public HuggingFace repo matched; not assumed proprietary"
@@ -654,7 +654,7 @@
       },
       {
         "model": "typesafe/jev-1.13-20260917",
-        "tokens": 12524050541911,
+        "tokens": 12946192493695,
         "classification": "unknown",
         "evidence": {
           "note": "no public HuggingFace repo matched; not assumed proprietary"
@@ -662,7 +662,7 @@
       },
       {
         "model": "google/gemini-3.7-flash-20260813",
-        "tokens": 11158616069219,
+        "tokens": 11219949589060,
         "classification": "unknown",
         "evidence": {
           "note": "no public HuggingFace repo matched; not assumed proprietary"
@@ -670,7 +670,7 @@
       },
       {
         "model": "google/gemini-3-flash-preview-20251217",
-        "tokens": 11038529959393,
+        "tokens": 10996803865887,
         "classification": "unknown",
         "evidence": {
           "note": "no public HuggingFace repo matched; not assumed proprietary"
@@ -678,7 +678,7 @@
       },
       {
         "model": "deepseek/deepseek-v4-pro-20260813",
-        "tokens": 9961034419418,
+        "tokens": 10082628551998,
         "classification": "open",
         "evidence": {
           "license": "mit",
@@ -687,7 +687,7 @@
       },
       {
         "model": "upstage/solar-pro4-20260810",
-        "tokens": 9890795798725,
+        "tokens": 9969459833003,
         "classification": "unknown",
         "evidence": {
           "note": "no public HuggingFace repo matched; not assumed proprietary"
@@ -695,7 +695,15 @@
       },
       {
         "model": "google/gemini-2.5-flash-lite",
-        "tokens": 8976469925344,
+        "tokens": 8970006844777,
+        "classification": "unknown",
+        "evidence": {
+          "note": "no public HuggingFace repo matched; not assumed proprietary"
+        }
+      },
+      {
+        "model": "nvidia/nemotron-3.5-lightning-20260807:free",
+        "tokens": 8171608796172,
         "classification": "unknown",
         "evidence": {
           "note": "no public HuggingFace repo matched; not assumed proprietary"
@@ -710,16 +718,17 @@
         }
       },
       {
-        "model": "nvidia/nemotron-3.5-lightning-20260807:free",
-        "tokens": 8041182078406,
-        "classification": "unknown",
+        "model": "deepseek/deepseek-v4.1-flash-20261017",
+        "tokens": 7336091079273,
+        "classification": "open",
         "evidence": {
-          "note": "no public HuggingFace repo matched; not assumed proprietary"
+          "license": "mit",
+          "source": "https://huggingface.co/deepseek-ai/DeepSeek-V4.1-Flash-1017"
         }
       },
       {
         "model": "anthropic/claude-4.6-sonnet-20260217",
-        "tokens": 7343510265767,
+        "tokens": 7210054672825,
         "classification": "unknown",
         "evidence": {
           "note": "no public HuggingFace repo matched; not assumed proprietary"
@@ -727,7 +736,7 @@
       },
       {
         "model": "stepfun/step-3.7-flash-20260528",
-        "tokens": 7167155524955,
+        "tokens": 6859574593629,
         "classification": "open",
         "evidence": {
           "license": "apache-2.0",
@@ -744,7 +753,7 @@
       },
       {
         "model": "openai/gpt-oss-120b",
-        "tokens": 6595151026159,
+        "tokens": 6601335456025,
         "classification": "open",
         "evidence": {
           "license": "apache-2.0",
@@ -753,7 +762,7 @@
       },
       {
         "model": "google/gemini-3.1-flash-lite-20260507",
-        "tokens": 6204034586980,
+        "tokens": 6180903778334,
         "classification": "unknown",
         "evidence": {
           "note": "no public HuggingFace repo matched; not assumed proprietary"
@@ -761,23 +770,7 @@
       },
       {
         "model": "openai/gpt-5.6-terra-20260709",
-        "tokens": 6045383701536,
-        "classification": "unknown",
-        "evidence": {
-          "note": "no public HuggingFace repo matched; not assumed proprietary"
-        }
-      },
-      {
-        "model": "google/gemini-2.5-flash",
-        "tokens": 5981061095821,
-        "classification": "unknown",
-        "evidence": {
-          "note": "no public HuggingFace repo matched; not assumed proprietary"
-        }
-      },
-      {
-        "model": "openai/gpt-6-astra-20260903",
-        "tokens": 5830068536097,
+        "tokens": 6022229939234,
         "classification": "unknown",
         "evidence": {
           "note": "no public HuggingFace repo matched; not assumed proprietary"
@@ -785,24 +778,31 @@
       },
       {
         "model": "anthropic/claude-sonnet-5.5-20260928",
-        "tokens": 5654794131584,
+        "tokens": 6004903880909,
         "classification": "unknown",
         "evidence": {
           "note": "no public HuggingFace repo matched; not assumed proprietary"
         }
       },
       {
-        "model": "google/gemma-4-31b-it-20260402",
-        "tokens": 5298976152213,
-        "classification": "open",
+        "model": "google/gemini-2.5-flash",
+        "tokens": 5892602366121,
+        "classification": "unknown",
         "evidence": {
-          "license": "apache-2.0",
-          "source": "https://huggingface.co/google/gemma-4-31B-it"
+          "note": "no public HuggingFace repo matched; not assumed proprietary"
+        }
+      },
+      {
+        "model": "openai/gpt-6-astra-20260903",
+        "tokens": 5891677050793,
+        "classification": "unknown",
+        "evidence": {
+          "note": "no public HuggingFace repo matched; not assumed proprietary"
         }
       },
       {
         "model": "xiaomi/mimo-v2.6-pro-20260921",
-        "tokens": 5237503384753,
+        "tokens": 5524622202811,
         "classification": "open",
         "evidence": {
           "license": "mit",
@@ -810,8 +810,17 @@
         }
       },
       {
-        "model": "anthropic/claude-4.8-opus-20260528",
-        "tokens": 5114075758480,
+        "model": "google/gemma-4-31b-it-20260402",
+        "tokens": 5318483661961,
+        "classification": "open",
+        "evidence": {
+          "license": "apache-2.0",
+          "source": "https://huggingface.co/google/gemma-4-31B-it"
+        }
+      },
+      {
+        "model": "openai/gpt-6.1-sol-20260929",
+        "tokens": 5035255524178,
         "classification": "unknown",
         "evidence": {
           "note": "no public HuggingFace repo matched; not assumed proprietary"
@@ -819,15 +828,15 @@
       },
       {
         "model": "nvidia/nemotron-3-super-120b-a12b-20230311:free",
-        "tokens": 4884313108651,
+        "tokens": 4896341569411,
         "classification": "unknown",
         "evidence": {
           "note": "no public HuggingFace repo matched; not assumed proprietary"
         }
       },
       {
-        "model": "openai/gpt-6.1-sol-20260929",
-        "tokens": 4767620888478,
+        "model": "anthropic/claude-4.8-opus-20260528",
+        "tokens": 4712802613105,
         "classification": "unknown",
         "evidence": {
           "note": "no public HuggingFace repo matched; not assumed proprietary"
@@ -843,7 +852,7 @@
       },
       {
         "model": "deepseek/deepseek-v3.2-20251201",
-        "tokens": 4361963476550,
+        "tokens": 4308530950254,
         "classification": "open",
         "evidence": {
           "license": "mit",
@@ -852,19 +861,10 @@
       },
       {
         "model": "dots-studio/dots-3-note-preview-20260813:free",
-        "tokens": 3807152397776,
+        "tokens": 3895889438566,
         "classification": "unknown",
         "evidence": {
           "note": "no public HuggingFace repo matched; not assumed proprietary"
-        }
-      },
-      {
-        "model": "deepseek/deepseek-v4.1-flash-20261017",
-        "tokens": 3723484472816,
-        "classification": "open",
-        "evidence": {
-          "license": "mit",
-          "source": "https://huggingface.co/deepseek-ai/DeepSeek-V4.1-Flash-1017"
         }
       }
     ],
@@ -872,289 +872,289 @@
   },
   "estimated_spend": {
     "label": "Estimated routed spend (derived)",
-    "total_usd": 1896815273.6821141,
+    "total_usd": 1994111264.4274178,
     "by_model": [
       {
         "model": "anthropic/claude-opus-5-20260723",
-        "tokens": 15439096672086,
+        "tokens": 15569934873918,
         "blended_price_per_token": 1.5e-05,
-        "estimated_usd": 231586450.08129,
-        "share_pct": 12.209
+        "estimated_usd": 233549023.10877,
+        "share_pct": 11.712
       },
       {
         "model": "openai/gpt-5.6-sol-20260709",
-        "tokens": 15959281252879,
+        "tokens": 15879054469085,
         "blended_price_per_token": 1.2e-05,
-        "estimated_usd": 191511375.034548,
-        "share_pct": 10.096
+        "estimated_usd": 190548653.62902,
+        "share_pct": 9.556
       },
       {
         "model": "anthropic/claude-opus-5.5-20260921",
-        "tokens": 14717926295254,
+        "tokens": 15795252871840,
         "blended_price_per_token": 1.2e-05,
-        "estimated_usd": 176615115.543048,
-        "share_pct": 9.311
+        "estimated_usd": 189543034.46208,
+        "share_pct": 9.505
       },
       {
         "model": "openai/gpt-6-astra-20260903",
-        "tokens": 5830068536097,
+        "tokens": 5891677050793,
         "blended_price_per_token": 3e-05,
-        "estimated_usd": 174902056.08291,
-        "share_pct": 9.221
+        "estimated_usd": 176750311.52379,
+        "share_pct": 8.864
       },
       {
         "model": "tencent/hy4-preview-20260827",
-        "tokens": 79058083668736,
+        "tokens": 80427153623306,
         "blended_price_per_token": 1.6675e-06,
-        "estimated_usd": 131829354.51761727,
-        "share_pct": 6.95
+        "estimated_usd": 134112278.66686274,
+        "share_pct": 6.725
       },
       {
         "model": "moonshotai/kimi-k3-20260715",
-        "tokens": 20429026997720,
+        "tokens": 20521999244396,
         "blended_price_per_token": 6.087500000000001e-06,
-        "estimated_usd": 124361701.84862052,
-        "share_pct": 6.556
+        "estimated_usd": 124927670.40026066,
+        "share_pct": 6.265
+      },
+      {
+        "model": "deepseek/deepseek-v4-flash-20260731",
+        "tokens": 102625427649322,
+        "blended_price_per_token": 8.8e-07,
+        "estimated_usd": 90310376.33140336,
+        "share_pct": 4.529
       },
       {
         "model": "anthropic/claude-sonnet-5-20260630",
-        "tokens": 14372063823191,
+        "tokens": 14283141286509,
         "blended_price_per_token": 6e-06,
-        "estimated_usd": 86232382.939146,
-        "share_pct": 4.546
+        "estimated_usd": 85698847.719054,
+        "share_pct": 4.298
       },
       {
         "model": "nvidia/nemotron-3-ultra-550b-a55b-20260604:free",
-        "tokens": 53994877277922,
+        "tokens": 54578507881289,
         "blended_price_per_token": 1.5e-06,
-        "estimated_usd": 80992315.916883,
-        "share_pct": 4.27
+        "estimated_usd": 81867761.82193351,
+        "share_pct": 4.105
       },
       {
         "model": "anthropic/claude-4.8-opus-20260528",
-        "tokens": 5114075758480,
+        "tokens": 4712802613105,
         "blended_price_per_token": 1.5e-05,
-        "estimated_usd": 76711136.3772,
-        "share_pct": 4.044
+        "estimated_usd": 70692039.196575,
+        "share_pct": 3.545
       },
       {
         "model": "anthropic/claude-4.6-sonnet-20260217",
-        "tokens": 7343510265767,
+        "tokens": 7210054672825,
         "blended_price_per_token": 9e-06,
-        "estimated_usd": 66091592.391903,
-        "share_pct": 3.484
+        "estimated_usd": 64890492.055425,
+        "share_pct": 3.254
       },
       {
         "model": "openai/gpt-5.6-luna-20260709",
-        "tokens": 81976450038837,
+        "tokens": 82155599998268,
         "blended_price_per_token": 7e-07,
-        "estimated_usd": 57383515.027185895,
-        "share_pct": 3.025
+        "estimated_usd": 57508919.9987876,
+        "share_pct": 2.884
       },
       {
         "model": "z-ai/glm-5.2-20260616",
-        "tokens": 31160308872637,
+        "tokens": 30731150451290,
         "blended_price_per_token": 1.52e-06,
-        "estimated_usd": 47363669.48640824,
-        "share_pct": 2.497
+        "estimated_usd": 46711348.6859608,
+        "share_pct": 2.342
       },
       {
         "model": "openai/gpt-5.6-terra-20260709",
-        "tokens": 6045383701536,
+        "tokens": 6022229939234,
         "blended_price_per_token": 7e-06,
-        "estimated_usd": 42317685.910752,
-        "share_pct": 2.231
+        "estimated_usd": 42155609.574638,
+        "share_pct": 2.114
       },
       {
         "model": "stepfun/step-5-preview-20261008",
         "tokens": 20293436655399,
         "blended_price_per_token": 1.85e-06,
         "estimated_usd": 37542857.81248815,
-        "share_pct": 1.979
-      },
-      {
-        "model": "google/gemini-3.8-flash-20260902",
-        "tokens": 13955119232991,
-        "blended_price_per_token": 2.475e-06,
-        "estimated_usd": 34538920.10165273,
-        "share_pct": 1.821
+        "share_pct": 1.883
       },
       {
         "model": "anthropic/claude-sonnet-5.5-20260928",
-        "tokens": 5654794131584,
+        "tokens": 6004903880909,
         "blended_price_per_token": 6e-06,
-        "estimated_usd": 33928764.789504,
-        "share_pct": 1.789
+        "estimated_usd": 36029423.285454,
+        "share_pct": 1.807
+      },
+      {
+        "model": "google/gemini-3.8-flash-20260902",
+        "tokens": 14170952498101,
+        "blended_price_per_token": 2.475e-06,
+        "estimated_usd": 35073107.43279997,
+        "share_pct": 1.759
       },
       {
         "model": "deepseek/deepseek-v4-pro-20260423",
-        "tokens": 21469238385818,
+        "tokens": 21160079674907,
         "blended_price_per_token": 1.43289e-06,
-        "estimated_usd": 30763056.990654755,
-        "share_pct": 1.622
+        "estimated_usd": 30320066.565377492,
+        "share_pct": 1.52
       },
       {
         "model": "openai/gpt-6.1-sol-20260929",
-        "tokens": 4767620888478,
+        "tokens": 5035255524178,
         "blended_price_per_token": 6e-06,
-        "estimated_usd": 28605725.330868002,
-        "share_pct": 1.508
+        "estimated_usd": 30211533.145068,
+        "share_pct": 1.515
       },
       {
         "model": "google/gemini-3.7-flash-20260813",
-        "tokens": 11158616069219,
+        "tokens": 11219949589060,
         "blended_price_per_token": 2.25e-06,
-        "estimated_usd": 25106886.15574275,
-        "share_pct": 1.324
+        "estimated_usd": 25244886.575385,
+        "share_pct": 1.266
       },
       {
         "model": "tencent/hy3-20260706",
-        "tokens": 64462095392519,
+        "tokens": 64367491462306,
         "blended_price_per_token": 3.2999999999999996e-07,
-        "estimated_usd": 21272491.47953127,
-        "share_pct": 1.121
+        "estimated_usd": 21241272.182560977,
+        "share_pct": 1.065
       },
       {
         "model": "google/gemini-3-flash-preview-20251217",
-        "tokens": 11038529959393,
+        "tokens": 10996803865887,
         "blended_price_per_token": 1.75e-06,
-        "estimated_usd": 19317427.428937748,
-        "share_pct": 1.018
+        "estimated_usd": 19244406.76530225,
+        "share_pct": 0.965
       },
       {
         "model": "z-ai/glm-5.3-20260816",
-        "tokens": 25080809720942,
+        "tokens": 25826016563759,
         "blended_price_per_token": 7.395e-07,
-        "estimated_usd": 18547258.78863661,
-        "share_pct": 0.978
-      },
-      {
-        "model": "deepseek/deepseek-v4-flash-20260731",
-        "tokens": 101998994999917,
-        "blended_price_per_token": 1.5e-07,
-        "estimated_usd": 15299849.24998755,
-        "share_pct": 0.807
+        "estimated_usd": 19098339.24889978,
+        "share_pct": 0.958
       },
       {
         "model": "google/gemini-3.6-flash-20260721",
         "tokens": 6729210272681,
         "blended_price_per_token": 2.25e-06,
         "estimated_usd": 15140723.11353225,
-        "share_pct": 0.798
+        "share_pct": 0.759
       },
       {
         "model": "minimax/minimax-m3-20260531",
-        "tokens": 19835544502801,
+        "tokens": 19693879671924,
         "blended_price_per_token": 7.5e-07,
-        "estimated_usd": 14876658.37710075,
-        "share_pct": 0.784
+        "estimated_usd": 14770409.753943,
+        "share_pct": 0.741
       },
       {
         "model": "xiaomi/mimo-v2.5-20260422",
-        "tokens": 65875531588005,
+        "tokens": 64475229354202,
         "blended_price_per_token": 2.1e-07,
-        "estimated_usd": 13833861.63348105,
-        "share_pct": 0.729
+        "estimated_usd": 13539798.16438242,
+        "share_pct": 0.679
       },
       {
         "model": "deepseek/deepseek-v4-pro-20260813",
-        "tokens": 9961034419418,
+        "tokens": 10082628551998,
         "blended_price_per_token": 1.32e-06,
-        "estimated_usd": 13148565.433631761,
-        "share_pct": 0.693
-      },
-      {
-        "model": "z-ai/glm-5.3-flash-20260826",
-        "tokens": 95029650632804,
-        "blended_price_per_token": 1.04e-07,
-        "estimated_usd": 9883083.665811617,
-        "share_pct": 0.521
+        "estimated_usd": 13309069.68863736,
+        "share_pct": 0.667
       },
       {
         "model": "deepseek/deepseek-v4.1-flash-20260910",
-        "tokens": 139696666192891,
-        "blended_price_per_token": 6.000000000000001e-08,
-        "estimated_usd": 8381799.971573461,
-        "share_pct": 0.442
+        "tokens": 142500065982866,
+        "blended_price_per_token": 8.8e-08,
+        "estimated_usd": 12540005.806492208,
+        "share_pct": 0.629
+      },
+      {
+        "model": "z-ai/glm-5.3-flash-20260826",
+        "tokens": 96771795419949,
+        "blended_price_per_token": 9.8738e-08,
+        "estimated_usd": 9555053.536174923,
+        "share_pct": 0.479
       },
       {
         "model": "google/gemini-2.5-flash",
-        "tokens": 5981061095821,
+        "tokens": 5892602366121,
         "blended_price_per_token": 1.4000000000000001e-06,
-        "estimated_usd": 8373485.534149401,
-        "share_pct": 0.441
+        "estimated_usd": 8249643.312569401,
+        "share_pct": 0.414
       }
     ],
     "by_vendor": [
       {
         "vendor": "anthropic",
-        "estimated_usd": 671165442.1220912,
-        "share_pct": 35.384
+        "estimated_usd": 680402859.8273581,
+        "share_pct": 34.121
       },
       {
         "vendor": "openai",
-        "estimated_usd": 503890891.14719784,
-        "share_pct": 26.565
-      },
-      {
-        "vendor": "tencent",
-        "estimated_usd": 153101845.99714854,
-        "share_pct": 8.072
-      },
-      {
-        "vendor": "moonshotai",
-        "estimated_usd": 124361701.84862052,
-        "share_pct": 6.556
-      },
-      {
-        "vendor": "google",
-        "estimated_usd": 111739782.92462227,
-        "share_pct": 5.891
-      },
-      {
-        "vendor": "nvidia",
-        "estimated_usd": 83372218.47126032,
-        "share_pct": 4.395
+        "estimated_usd": 506611341.3453487,
+        "share_pct": 25.405
       },
       {
         "vendor": "deepseek",
-        "estimated_usd": 78740283.47687167,
-        "share_pct": 4.151
+        "estimated_usd": 158896957.09530103,
+        "share_pct": 7.968
+      },
+      {
+        "vendor": "tencent",
+        "estimated_usd": 155353550.8494237,
+        "share_pct": 7.791
+      },
+      {
+        "vendor": "moonshotai",
+        "estimated_usd": 124927670.40026066,
+        "share_pct": 6.265
+      },
+      {
+        "vendor": "google",
+        "estimated_usd": 112199104.81541365,
+        "share_pct": 5.627
+      },
+      {
+        "vendor": "nvidia",
+        "estimated_usd": 84268459.52531065,
+        "share_pct": 4.226
       },
       {
         "vendor": "z-ai",
-        "estimated_usd": 75794011.94085647,
-        "share_pct": 3.996
+        "estimated_usd": 75364741.47103551,
+        "share_pct": 3.779
       },
       {
         "vendor": "stepfun",
-        "estimated_usd": 42380687.791832775,
-        "share_pct": 2.234
+        "estimated_usd": 42173070.66318773,
+        "share_pct": 2.115
       },
       {
         "vendor": "xiaomi",
-        "estimated_usd": 24921058.07289962,
-        "share_pct": 1.314
+        "estimated_usd": 25072757.469535656,
+        "share_pct": 1.257
       },
       {
         "vendor": "minimax",
-        "estimated_usd": 21004241.86290975,
-        "share_pct": 1.107
+        "estimated_usd": 20897993.239752002,
+        "share_pct": 1.048
       },
       {
         "vendor": "upstage",
-        "estimated_usd": 2225429.054713125,
-        "share_pct": 0.117
-      },
-      {
-        "vendor": "poolside",
-        "estimated_usd": 2069601.699123045,
-        "share_pct": 0.109
+        "estimated_usd": 3738547.4373761253,
+        "share_pct": 0.187
       },
       {
         "vendor": "meta",
-        "estimated_usd": 2048077.2719669999,
-        "share_pct": 0.108
+        "estimated_usd": 2119647.03700125,
+        "share_pct": 0.106
+      },
+      {
+        "vendor": "poolside",
+        "estimated_usd": 2084563.25111331,
+        "share_pct": 0.105
       }
     ],
     "models_without_pricing": [
@@ -1171,14 +1171,14 @@
     ]
   },
   "task_segmentation": {
-    "as_of": "2026-10-18",
+    "as_of": "2026-10-19",
     "window_days": 7,
     "macro_categories": [
       {
         "key": "code",
         "label": "Code",
-        "usage_share": 0.094,
-        "token_share": 0.303
+        "usage_share": 0.089,
+        "token_share": 0.297
       },
       {
         "key": "data",
@@ -1189,14 +1189,14 @@
       {
         "key": "agent",
         "label": "Agent",
-        "usage_share": 0.134,
-        "token_share": 0.327
+        "usage_share": 0.135,
+        "token_share": 0.334
       },
       {
         "key": "general",
         "label": "General",
-        "usage_share": 0.588,
-        "token_share": 0.298
+        "usage_share": 0.592,
+        "token_share": 0.297
       }
     ],
     "classifications": [
@@ -1204,33 +1204,33 @@
         "tag": "classification_tagging",
         "display_name": "Classification",
         "macro_category": "general",
-        "usage_share_pct": 32.2,
-        "token_share_pct": 8.4,
+        "usage_share_pct": 32.4,
+        "token_share_pct": 9.2,
         "top_models": [
           {
             "id": "typesafe/jev-1.13-20260917",
-            "req_pct": 27.5,
-            "tok_pct": 12.7
+            "req_pct": 26.3,
+            "tok_pct": 11.6
           },
           {
             "id": "z-ai/glm-5.3-flash-20260826",
-            "req_pct": 5.2,
-            "tok_pct": 9.0
-          },
-          {
-            "id": "openai/gpt-6-luna-20260922",
-            "req_pct": 4.8,
-            "tok_pct": 5.6
-          },
-          {
-            "id": "deepseek/deepseek-v4.1-flash-20260910",
-            "req_pct": 4.8,
+            "req_pct": 5.5,
             "tok_pct": 9.3
           },
           {
-            "id": "google/gemini-2.5-flash-lite",
-            "req_pct": 3.8,
-            "tok_pct": 1.6
+            "id": "openai/gpt-6-luna-20260922",
+            "req_pct": 4.9,
+            "tok_pct": 5.4
+          },
+          {
+            "id": "deepseek/deepseek-v4.1-flash-20260910",
+            "req_pct": 4.3,
+            "tok_pct": 8.3
+          },
+          {
+            "id": "typesafe/jev-1.14-20261014",
+            "req_pct": 3.9,
+            "tok_pct": 5.2
           }
         ]
       },
@@ -1238,33 +1238,33 @@
         "tag": "data:extraction",
         "display_name": "Data Extraction",
         "macro_category": "data",
-        "usage_share_pct": 13.6,
+        "usage_share_pct": 13.8,
         "token_share_pct": 5.3,
         "top_models": [
           {
             "id": "z-ai/glm-5.3-flash-20260826",
-            "req_pct": 11.5,
-            "tok_pct": 10.5
+            "req_pct": 11.6,
+            "tok_pct": 12.8
           },
           {
             "id": "google/gemini-2.5-flash-lite",
-            "req_pct": 6.4,
+            "req_pct": 6.3,
             "tok_pct": 1.9
           },
           {
-            "id": "typesafe/jev-1.13-20260917",
+            "id": "openai/gpt-6-luna-20260922",
             "req_pct": 5.6,
-            "tok_pct": 2.1
+            "tok_pct": 5.1
           },
           {
-            "id": "openai/gpt-6-luna-20260922",
-            "req_pct": 5.4,
-            "tok_pct": 4.6
+            "id": "typesafe/jev-1.13-20260917",
+            "req_pct": 5.5,
+            "tok_pct": 2.2
           },
           {
             "id": "deepseek/deepseek-v4.1-flash-20260910",
-            "req_pct": 5.2,
-            "tok_pct": 11.0
+            "req_pct": 4.8,
+            "tok_pct": 10.4
           }
         ]
       },
@@ -1272,33 +1272,33 @@
         "tag": "agent:workflow_execution",
         "display_name": "Workflow Execution",
         "macro_category": "agent",
-        "usage_share_pct": 8.3,
-        "token_share_pct": 21.8,
+        "usage_share_pct": 8.4,
+        "token_share_pct": 22.3,
         "top_models": [
           {
             "id": "deepseek/deepseek-v4.1-flash-20260910",
-            "req_pct": 15.9,
-            "tok_pct": 20.1
+            "req_pct": 14.6,
+            "tok_pct": 19.1
           },
           {
             "id": "z-ai/glm-5.3-flash-20260826",
-            "req_pct": 12.4,
-            "tok_pct": 10.1
+            "req_pct": 14.1,
+            "tok_pct": 9.8
           },
           {
             "id": "openai/gpt-6-luna-20260922",
-            "req_pct": 5.2,
-            "tok_pct": 4.1
+            "req_pct": 5.3,
+            "tok_pct": 4.2
           },
           {
             "id": "xiaomi/mimo-v2.6-flash-20260921",
-            "req_pct": 5.2,
-            "tok_pct": 6.3
+            "req_pct": 4.9,
+            "tok_pct": 6.0
           },
           {
             "id": "tencent/hy4-preview-20260827",
-            "req_pct": 4.4,
-            "tok_pct": 7.6
+            "req_pct": 4.6,
+            "tok_pct": 7.9
           }
         ]
       },
@@ -1311,28 +1311,28 @@
         "top_models": [
           {
             "id": "deepseek/deepseek-v4.1-flash-20260910",
-            "req_pct": 20.5,
-            "tok_pct": 14.7
+            "req_pct": 20.0,
+            "tok_pct": 14.3
           },
           {
             "id": "deepseek/deepseek-v4-flash-20260423",
-            "req_pct": 14.1,
-            "tok_pct": 11.3
+            "req_pct": 12.3,
+            "tok_pct": 10.3
           },
           {
             "id": "deepseek/deepseek-v4-flash-20260731",
-            "req_pct": 9.2,
-            "tok_pct": 5.6
+            "req_pct": 10.2,
+            "tok_pct": 6.4
+          },
+          {
+            "id": "deepseek/deepseek-v4.1-flash-20261017",
+            "req_pct": 4.7,
+            "tok_pct": 2.7
           },
           {
             "id": "mistralai/mistral-nemo",
-            "req_pct": 4.1,
+            "req_pct": 3.9,
             "tok_pct": 1.4
-          },
-          {
-            "id": "google/gemma-4-31b-it-20260402",
-            "req_pct": 3.8,
-            "tok_pct": 3.5
           }
         ]
       },
@@ -1340,33 +1340,33 @@
         "tag": "content_writing",
         "display_name": "Content Writing",
         "macro_category": "general",
-        "usage_share_pct": 5.7,
+        "usage_share_pct": 5.8,
         "token_share_pct": 3.0,
         "top_models": [
           {
             "id": "z-ai/glm-5.3-flash-20260826",
-            "req_pct": 34.9,
-            "tok_pct": 23.7
+            "req_pct": 37.2,
+            "tok_pct": 25.8
           },
           {
             "id": "deepseek/deepseek-v4.1-flash-20260910",
-            "req_pct": 8.9,
-            "tok_pct": 14.6
+            "req_pct": 7.4,
+            "tok_pct": 13.5
           },
           {
             "id": "deepseek/deepseek-v4-flash-20260731",
-            "req_pct": 7.0,
-            "tok_pct": 3.1
+            "req_pct": 7.1,
+            "tok_pct": 3.2
           },
           {
             "id": "deepseek/deepseek-v4-flash-20260423",
-            "req_pct": 5.0,
-            "tok_pct": 3.6
+            "req_pct": 4.7,
+            "tok_pct": 3.3
           },
           {
             "id": "openai/gpt-6-luna-20260922",
             "req_pct": 4.5,
-            "tok_pct": 4.8
+            "tok_pct": 4.9
           }
         ]
       },
@@ -1374,33 +1374,33 @@
         "tag": "data:transformation",
         "display_name": "Data Transformation",
         "macro_category": "data",
-        "usage_share_pct": 4.7,
+        "usage_share_pct": 4.5,
         "token_share_pct": 1.9,
         "top_models": [
           {
             "id": "z-ai/glm-5.3-flash-20260826",
-            "req_pct": 32.4,
-            "tok_pct": 27.5
+            "req_pct": 29.3,
+            "tok_pct": 27.9
           },
           {
             "id": "google/gemini-2.5-flash-lite",
-            "req_pct": 6.6,
-            "tok_pct": 1.8
+            "req_pct": 6.9,
+            "tok_pct": 1.9
           },
           {
             "id": "deepseek/deepseek-v4.1-flash-20260910",
-            "req_pct": 6.1,
-            "tok_pct": 10.9
+            "req_pct": 5.6,
+            "tok_pct": 10.6
           },
           {
             "id": "deepseek/deepseek-v4-flash-20260423",
-            "req_pct": 6.0,
-            "tok_pct": 6.6
+            "req_pct": 5.6,
+            "tok_pct": 5.2
           },
           {
-            "id": "deepseek/deepseek-v4-flash-20260731",
-            "req_pct": 5.0,
-            "tok_pct": 2.7
+            "id": "openai/gpt-6-luna-20260922",
+            "req_pct": 5.3,
+            "tok_pct": 4.7
           }
         ]
       },
@@ -1408,33 +1408,33 @@
         "tag": "qa_knowledge",
         "display_name": "Q&A & Knowledge",
         "macro_category": "general",
-        "usage_share_pct": 3.3,
-        "token_share_pct": 4.2,
+        "usage_share_pct": 3.2,
+        "token_share_pct": 3.7,
         "top_models": [
           {
-            "id": "typesafe/jev-1.13-20260917",
-            "req_pct": 11.7,
-            "tok_pct": 0.7
+            "id": "openai/gpt-6-luna-20260922",
+            "req_pct": 10.5,
+            "tok_pct": 3.9
           },
           {
-            "id": "openai/gpt-6-luna-20260922",
-            "req_pct": 10.1,
-            "tok_pct": 3.3
+            "id": "typesafe/jev-1.13-20260917",
+            "req_pct": 10.3,
+            "tok_pct": 0.8
           },
           {
             "id": "deepseek/deepseek-v4.1-flash-20260910",
-            "req_pct": 8.8,
-            "tok_pct": 11.0
-          },
-          {
-            "id": "stepfun/step-5-preview-20261008",
-            "req_pct": 4.7,
-            "tok_pct": 50.3
+            "req_pct": 7.9,
+            "tok_pct": 12.3
           },
           {
             "id": "deepseek/deepseek-v4-flash-20260731",
-            "req_pct": 3.9,
-            "tok_pct": 2.1
+            "req_pct": 4.0,
+            "tok_pct": 2.5
+          },
+          {
+            "id": "z-ai/glm-5.3-flash-20260826",
+            "req_pct": 3.5,
+            "tok_pct": 3.7
           }
         ]
       },
@@ -1442,32 +1442,32 @@
         "tag": "agent:multi_step_planning",
         "display_name": "Multi-step Planning",
         "macro_category": "agent",
-        "usage_share_pct": 3.1,
-        "token_share_pct": 7.6,
+        "usage_share_pct": 3.2,
+        "token_share_pct": 7.8,
         "top_models": [
           {
-            "id": "deepseek/deepseek-v4.1-flash-20260910",
-            "req_pct": 15.8,
-            "tok_pct": 23.1
+            "id": "z-ai/glm-5.3-flash-20260826",
+            "req_pct": 18.4,
+            "tok_pct": 11.6
           },
           {
-            "id": "z-ai/glm-5.3-flash-20260826",
-            "req_pct": 15.6,
-            "tok_pct": 12.4
+            "id": "deepseek/deepseek-v4.1-flash-20260910",
+            "req_pct": 13.8,
+            "tok_pct": 21.3
           },
           {
             "id": "openai/gpt-6-luna-20260922",
-            "req_pct": 5.7,
-            "tok_pct": 4.0
+            "req_pct": 5.8,
+            "tok_pct": 4.2
           },
           {
             "id": "xiaomi/mimo-v2.6-flash-20260921",
-            "req_pct": 4.4,
-            "tok_pct": 5.5
+            "req_pct": 4.2,
+            "tok_pct": 5.3
           },
           {
             "id": "deepseek/deepseek-v4-flash-20260423",
-            "req_pct": 3.2,
+            "req_pct": 2.7,
             "tok_pct": 1.4
           }
         ]
@@ -1476,33 +1476,67 @@
         "tag": "code:general_impl",
         "display_name": "Code Generation",
         "macro_category": "code",
-        "usage_share_pct": 2.8,
-        "token_share_pct": 9.9,
+        "usage_share_pct": 2.6,
+        "token_share_pct": 9.3,
         "top_models": [
           {
             "id": "deepseek/deepseek-v4.1-flash-20260910",
-            "req_pct": 23.9,
-            "tok_pct": 23.3
+            "req_pct": 18.6,
+            "tok_pct": 19.1
           },
           {
             "id": "xiaomi/mimo-v2.6-flash-20260921",
             "req_pct": 7.2,
-            "tok_pct": 6.9
+            "tok_pct": 7.0
           },
           {
             "id": "z-ai/glm-5.3-flash-20260826",
-            "req_pct": 7.1,
-            "tok_pct": 9.4
+            "req_pct": 6.4,
+            "tok_pct": 7.6
           },
           {
             "id": "openai/gpt-6-luna-20260922",
-            "req_pct": 5.3,
-            "tok_pct": 4.4
+            "req_pct": 5.6,
+            "tok_pct": 4.5
           },
           {
-            "id": "stepfun/step-5-preview-20261008",
-            "req_pct": 4.1,
-            "tok_pct": 7.4
+            "id": "qwen/qwen3.6-35b-a3b-20260415",
+            "req_pct": 3.8,
+            "tok_pct": 1.9
+          }
+        ]
+      },
+      {
+        "tag": "conversational_reply",
+        "display_name": "Conversation",
+        "macro_category": "general",
+        "usage_share_pct": 2.3,
+        "token_share_pct": 2.4,
+        "top_models": [
+          {
+            "id": "deepseek/deepseek-v4.1-flash-20260910",
+            "req_pct": 17.2,
+            "tok_pct": 18.2
+          },
+          {
+            "id": "deepseek/deepseek-v4-flash-20260423",
+            "req_pct": 8.0,
+            "tok_pct": 3.9
+          },
+          {
+            "id": "z-ai/glm-5.3-flash-20260826",
+            "req_pct": 6.6,
+            "tok_pct": 7.7
+          },
+          {
+            "id": "deepseek/deepseek-v4-flash-20260731",
+            "req_pct": 5.8,
+            "tok_pct": 4.0
+          },
+          {
+            "id": "deepseek/deepseek-v4.1-flash-20261017",
+            "req_pct": 4.4,
+            "tok_pct": 2.2
           }
         ]
       },
@@ -1511,66 +1545,32 @@
         "display_name": "Summarization",
         "macro_category": "general",
         "usage_share_pct": 2.3,
-        "token_share_pct": 4.4,
+        "token_share_pct": 3.4,
         "top_models": [
           {
             "id": "z-ai/glm-5.3-flash-20260826",
-            "req_pct": 17.7,
-            "tok_pct": 3.6
-          },
-          {
-            "id": "stepfun/step-5-preview-20261008",
-            "req_pct": 10.4,
-            "tok_pct": 78.0
+            "req_pct": 19.7,
+            "tok_pct": 5.2
           },
           {
             "id": "openai/gpt-6-luna-20260922",
-            "req_pct": 6.8,
-            "tok_pct": 1.6
-          },
-          {
-            "id": "deepseek/deepseek-v4.1-flash-20260910",
-            "req_pct": 6.3,
+            "req_pct": 7.4,
             "tok_pct": 2.1
           },
           {
+            "id": "stepfun/step-5-preview-20261008",
+            "req_pct": 7.4,
+            "tok_pct": 70.8
+          },
+          {
             "id": "google/gemma-4-26b-a4b-it-20260403",
-            "req_pct": 6.0,
-            "tok_pct": 0.3
-          }
-        ]
-      },
-      {
-        "tag": "conversational_reply",
-        "display_name": "Conversation",
-        "macro_category": "general",
-        "usage_share_pct": 2.2,
-        "token_share_pct": 2.3,
-        "top_models": [
+            "req_pct": 6.3,
+            "tok_pct": 0.5
+          },
           {
             "id": "deepseek/deepseek-v4.1-flash-20260910",
-            "req_pct": 17.4,
-            "tok_pct": 18.4
-          },
-          {
-            "id": "deepseek/deepseek-v4-flash-20260423",
-            "req_pct": 9.0,
-            "tok_pct": 4.1
-          },
-          {
-            "id": "z-ai/glm-5.3-flash-20260826",
-            "req_pct": 6.2,
-            "tok_pct": 7.3
-          },
-          {
-            "id": "deepseek/deepseek-v4-flash-20260731",
-            "req_pct": 5.1,
-            "tok_pct": 3.8
-          },
-          {
-            "id": "openai/gpt-6-luna-20260922",
-            "req_pct": 3.6,
-            "tok_pct": 3.0
+            "req_pct": 6.1,
+            "tok_pct": 2.6
           }
         ]
       },
@@ -1578,33 +1578,33 @@
         "tag": "translation",
         "display_name": "Translation",
         "macro_category": "general",
-        "usage_share_pct": 2.0,
+        "usage_share_pct": 2.1,
         "token_share_pct": 0.2,
         "top_models": [
           {
             "id": "meta-llama/llama-3.1-8b-instruct",
-            "req_pct": 14.2,
-            "tok_pct": 2.4
-          },
-          {
-            "id": "google/gemini-2.5-flash-lite",
-            "req_pct": 9.0,
-            "tok_pct": 3.1
+            "req_pct": 18.6,
+            "tok_pct": 3.3
           },
           {
             "id": "deepseek/deepseek-v4-flash-20260423",
-            "req_pct": 8.5,
-            "tok_pct": 10.4
+            "req_pct": 9.0,
+            "tok_pct": 11.3
           },
           {
-            "id": "openai/gpt-6-luna-20260922",
-            "req_pct": 5.7,
-            "tok_pct": 6.2
+            "id": "google/gemini-2.5-flash-lite",
+            "req_pct": 8.3,
+            "tok_pct": 3.0
           },
           {
             "id": "google/gemma-4-31b-it-20260402",
-            "req_pct": 5.4,
-            "tok_pct": 6.0
+            "req_pct": 5.3,
+            "tok_pct": 6.5
+          },
+          {
+            "id": "openai/gpt-6-luna-20260922",
+            "req_pct": 5.1,
+            "tok_pct": 6.2
           }
         ]
       },
@@ -1612,33 +1612,33 @@
         "tag": "code:debugging",
         "display_name": "Debugging",
         "macro_category": "code",
-        "usage_share_pct": 1.8,
-        "token_share_pct": 5.8,
+        "usage_share_pct": 1.6,
+        "token_share_pct": 5.7,
         "top_models": [
           {
             "id": "deepseek/deepseek-v4.1-flash-20260910",
-            "req_pct": 26.2,
-            "tok_pct": 25.2
+            "req_pct": 20.0,
+            "tok_pct": 20.4
           },
           {
             "id": "z-ai/glm-5.3-flash-20260826",
-            "req_pct": 8.7,
-            "tok_pct": 8.2
+            "req_pct": 8.9,
+            "tok_pct": 8.1
           },
           {
             "id": "xiaomi/mimo-v2.6-flash-20260921",
-            "req_pct": 6.7,
-            "tok_pct": 6.9
-          },
-          {
-            "id": "stepfun/step-5-preview-20261008",
-            "req_pct": 4.4,
-            "tok_pct": 8.2
+            "req_pct": 6.8,
+            "tok_pct": 7.0
           },
           {
             "id": "openai/gpt-6-luna-20260922",
-            "req_pct": 4.3,
-            "tok_pct": 3.6
+            "req_pct": 4.7,
+            "tok_pct": 3.5
+          },
+          {
+            "id": "qwen/qwen3.6-35b-a3b-20260415",
+            "req_pct": 4.0,
+            "tok_pct": 1.7
           }
         ]
       },
@@ -1651,28 +1651,28 @@
         "top_models": [
           {
             "id": "openai/gpt-6-luna-20260922",
-            "req_pct": 13.1,
+            "req_pct": 13.3,
             "tok_pct": 12.3
           },
           {
             "id": "google/gemini-2.5-flash",
-            "req_pct": 8.8,
+            "req_pct": 9.1,
             "tok_pct": 3.1
           },
           {
             "id": "deepseek/deepseek-v4.1-flash-20260910",
-            "req_pct": 7.3,
-            "tok_pct": 12.2
+            "req_pct": 7.0,
+            "tok_pct": 12.0
           },
           {
             "id": "deepseek/deepseek-v4-flash-20260731",
             "req_pct": 4.4,
-            "tok_pct": 4.2
+            "tok_pct": 4.3
           },
           {
             "id": "openai/gpt-5.6-luna-20260709",
-            "req_pct": 4.2,
-            "tok_pct": 5.3
+            "req_pct": 4.0,
+            "tok_pct": 4.7
           }
         ]
       },
@@ -1680,33 +1680,33 @@
         "tag": "code:file_read_write",
         "display_name": "File I/O",
         "macro_category": "code",
-        "usage_share_pct": 1.5,
+        "usage_share_pct": 1.4,
         "token_share_pct": 4.9,
         "top_models": [
           {
             "id": "deepseek/deepseek-v4.1-flash-20260910",
-            "req_pct": 20.1,
-            "tok_pct": 20.1
+            "req_pct": 17.1,
+            "tok_pct": 18.1
           },
           {
             "id": "z-ai/glm-5.3-flash-20260826",
-            "req_pct": 8.3,
-            "tok_pct": 7.6
-          },
-          {
-            "id": "xiaomi/mimo-v2.6-flash-20260921",
-            "req_pct": 7.1,
-            "tok_pct": 6.3
+            "req_pct": 8.8,
+            "tok_pct": 7.5
           },
           {
             "id": "tencent/hy4-preview-20260827",
-            "req_pct": 6.7,
-            "tok_pct": 9.0
+            "req_pct": 7.3,
+            "tok_pct": 9.6
           },
           {
-            "id": "stepfun/step-5-preview-20261008",
-            "req_pct": 4.4,
-            "tok_pct": 6.9
+            "id": "xiaomi/mimo-v2.6-flash-20260921",
+            "req_pct": 6.6,
+            "tok_pct": 5.9
+          },
+          {
+            "id": "tencent/hy3-20260706",
+            "req_pct": 4.2,
+            "tok_pct": 4.1
           }
         ]
       },
@@ -1714,33 +1714,33 @@
         "tag": "code:review_security",
         "display_name": "Code Review",
         "macro_category": "code",
-        "usage_share_pct": 1.3,
-        "token_share_pct": 2.7,
+        "usage_share_pct": 1.4,
+        "token_share_pct": 2.9,
         "top_models": [
           {
             "id": "z-ai/glm-5.3-flash-20260826",
-            "req_pct": 18.6,
-            "tok_pct": 16.7
-          },
-          {
-            "id": "deepseek/deepseek-v4.1-flash-20260910",
-            "req_pct": 13.5,
-            "tok_pct": 18.4
+            "req_pct": 16.4,
+            "tok_pct": 14.4
           },
           {
             "id": "typesafe/jev-1.13-20260917",
-            "req_pct": 8.9,
-            "tok_pct": 0.7
+            "req_pct": 12.5,
+            "tok_pct": 1.0
           },
           {
-            "id": "xiaomi/mimo-v2.6-flash-20260921",
-            "req_pct": 5.8,
-            "tok_pct": 9.7
+            "id": "deepseek/deepseek-v4.1-flash-20260910",
+            "req_pct": 12.2,
+            "tok_pct": 17.0
           },
           {
             "id": "openai/gpt-6-luna-20260922",
-            "req_pct": 5.6,
-            "tok_pct": 5.8
+            "req_pct": 5.7,
+            "tok_pct": 6.0
+          },
+          {
+            "id": "xiaomi/mimo-v2.6-flash-20260921",
+            "req_pct": 5.2,
+            "tok_pct": 9.3
           }
         ]
       },
@@ -1753,96 +1753,28 @@
         "top_models": [
           {
             "id": "nace-ai/drex-v1.5-20261009",
-            "req_pct": 28.3,
+            "req_pct": 29.8,
             "tok_pct": 0.9
           },
           {
             "id": "nace-ai/drex-v2.0-20261009",
-            "req_pct": 17.4,
+            "req_pct": 19.0,
             "tok_pct": 0.4
           },
           {
             "id": "typesafe/jev-1.13-20260917",
-            "req_pct": 15.5,
-            "tok_pct": 2.0
+            "req_pct": 13.0,
+            "tok_pct": 1.8
           },
           {
             "id": "deepseek/deepseek-v4.1-flash-20260910",
-            "req_pct": 5.2,
-            "tok_pct": 32.4
+            "req_pct": 4.8,
+            "tok_pct": 31.3
           },
           {
             "id": "typesafe/jev-1.14-20261014",
-            "req_pct": 2.9,
-            "tok_pct": 0.5
-          }
-        ]
-      },
-      {
-        "tag": "agent:memory_extraction",
-        "display_name": "Memory Extraction",
-        "macro_category": "agent",
-        "usage_share_pct": 0.7,
-        "token_share_pct": 1.1,
-        "top_models": [
-          {
-            "id": "deepseek/deepseek-v4-flash-20260731",
-            "req_pct": 13.9,
-            "tok_pct": 4.9
-          },
-          {
-            "id": "deepseek/deepseek-v4.1-flash-20260910",
-            "req_pct": 13.1,
-            "tok_pct": 15.8
-          },
-          {
-            "id": "xiaomi/mimo-v2.6-flash-20260921",
-            "req_pct": 8.7,
-            "tok_pct": 17.5
-          },
-          {
-            "id": "deepseek/deepseek-v4-flash-20260423",
-            "req_pct": 8.7,
-            "tok_pct": 2.7
-          },
-          {
-            "id": "google/gemma-4-26b-a4b-it-20260403",
-            "req_pct": 5.1,
-            "tok_pct": 0.4
-          }
-        ]
-      },
-      {
-        "tag": "code:shell_execution",
-        "display_name": "Shell Execution",
-        "macro_category": "code",
-        "usage_share_pct": 0.7,
-        "token_share_pct": 2.2,
-        "top_models": [
-          {
-            "id": "deepseek/deepseek-v4.1-flash-20260910",
-            "req_pct": 22.2,
-            "tok_pct": 22.6
-          },
-          {
-            "id": "z-ai/glm-5.3-flash-20260826",
-            "req_pct": 9.4,
-            "tok_pct": 9.6
-          },
-          {
-            "id": "xiaomi/mimo-v2.6-flash-20260921",
-            "req_pct": 6.7,
-            "tok_pct": 6.2
-          },
-          {
-            "id": "z-ai/glm-5.3-20260816",
-            "req_pct": 5.8,
-            "tok_pct": 7.4
-          },
-          {
-            "id": "stepfun/step-5-preview-20261008",
-            "req_pct": 4.1,
-            "tok_pct": 6.8
+            "req_pct": 4.3,
+            "tok_pct": 0.7
           }
         ]
       },
@@ -1855,28 +1787,96 @@
         "top_models": [
           {
             "id": "deepseek/deepseek-v4.1-flash-20260910",
-            "req_pct": 15.9,
-            "tok_pct": 23.3
+            "req_pct": 14.6,
+            "tok_pct": 21.8
           },
           {
             "id": "z-ai/glm-5.3-flash-20260826",
-            "req_pct": 8.7,
-            "tok_pct": 10.0
+            "req_pct": 9.1,
+            "tok_pct": 9.4
           },
           {
             "id": "openai/gpt-6-luna-20260922",
-            "req_pct": 6.5,
-            "tok_pct": 5.2
+            "req_pct": 7.1,
+            "tok_pct": 5.7
           },
           {
             "id": "deepseek/deepseek-v4-flash-20260423",
-            "req_pct": 4.9,
-            "tok_pct": 2.6
+            "req_pct": 4.7,
+            "tok_pct": 2.8
           },
           {
             "id": "deepseek/deepseek-v4-flash-20260731",
-            "req_pct": 4.4,
+            "req_pct": 4.6,
             "tok_pct": 2.3
+          }
+        ]
+      },
+      {
+        "tag": "agent:memory_extraction",
+        "display_name": "Memory Extraction",
+        "macro_category": "agent",
+        "usage_share_pct": 0.7,
+        "token_share_pct": 1.1,
+        "top_models": [
+          {
+            "id": "deepseek/deepseek-v4-flash-20260731",
+            "req_pct": 14.8,
+            "tok_pct": 5.1
+          },
+          {
+            "id": "deepseek/deepseek-v4.1-flash-20260910",
+            "req_pct": 13.7,
+            "tok_pct": 15.2
+          },
+          {
+            "id": "xiaomi/mimo-v2.6-flash-20260921",
+            "req_pct": 8.5,
+            "tok_pct": 17.0
+          },
+          {
+            "id": "deepseek/deepseek-v4-flash-20260423",
+            "req_pct": 7.4,
+            "tok_pct": 2.7
+          },
+          {
+            "id": "google/gemma-4-26b-a4b-it-20260403",
+            "req_pct": 5.9,
+            "tok_pct": 0.5
+          }
+        ]
+      },
+      {
+        "tag": "code:shell_execution",
+        "display_name": "Shell Execution",
+        "macro_category": "code",
+        "usage_share_pct": 0.7,
+        "token_share_pct": 2.2,
+        "top_models": [
+          {
+            "id": "deepseek/deepseek-v4.1-flash-20260910",
+            "req_pct": 16.9,
+            "tok_pct": 18.8
+          },
+          {
+            "id": "z-ai/glm-5.3-flash-20260826",
+            "req_pct": 10.8,
+            "tok_pct": 10.1
+          },
+          {
+            "id": "xiaomi/mimo-v2.6-flash-20260921",
+            "req_pct": 6.4,
+            "tok_pct": 5.6
+          },
+          {
+            "id": "z-ai/glm-5.3-20260816",
+            "req_pct": 5.5,
+            "tok_pct": 7.4
+          },
+          {
+            "id": "nvidia/nemotron-3-ultra-550b-a55b-20260604:free",
+            "req_pct": 3.5,
+            "tok_pct": 7.0
           }
         ]
       },
@@ -1889,28 +1889,28 @@
         "top_models": [
           {
             "id": "deepseek/deepseek-v4.1-flash-20260910",
-            "req_pct": 14.6,
-            "tok_pct": 17.2
+            "req_pct": 13.4,
+            "tok_pct": 16.3
           },
           {
             "id": "xiaomi/mimo-v2.6-flash-20260921",
-            "req_pct": 12.5,
-            "tok_pct": 10.6
+            "req_pct": 12.2,
+            "tok_pct": 10.2
           },
           {
             "id": "meta/muse-spark-1.3-contributor-20260902",
-            "req_pct": 7.1,
-            "tok_pct": 7.5
-          },
-          {
-            "id": "stepfun/step-5-preview-20261008",
-            "req_pct": 6.2,
-            "tok_pct": 9.2
+            "req_pct": 7.2,
+            "tok_pct": 7.6
           },
           {
             "id": "z-ai/glm-5.3-flash-20260826",
-            "req_pct": 5.4,
-            "tok_pct": 5.5
+            "req_pct": 4.8,
+            "tok_pct": 4.7
+          },
+          {
+            "id": "stepfun/step-5-preview-20261008",
+            "req_pct": 4.7,
+            "tok_pct": 7.2
           }
         ]
       },
@@ -1919,32 +1919,32 @@
         "display_name": "Security Audit",
         "macro_category": "general",
         "usage_share_pct": 0.6,
-        "token_share_pct": 1.5,
+        "token_share_pct": 1.6,
         "top_models": [
           {
             "id": "deepseek/deepseek-v4.1-flash-20260910",
-            "req_pct": 25.3,
-            "tok_pct": 27.2
+            "req_pct": 22.3,
+            "tok_pct": 24.5
           },
           {
-            "id": "z-ai/glm-5.3-20260816",
-            "req_pct": 9.3,
-            "tok_pct": 16.2
+            "id": "deepseek/deepseek-v4.1-flash-20261017",
+            "req_pct": 10.4,
+            "tok_pct": 15.9
           },
           {
             "id": "z-ai/glm-5.3-flash-20260826",
-            "req_pct": 8.6,
-            "tok_pct": 11.2
+            "req_pct": 8.1,
+            "tok_pct": 10.3
+          },
+          {
+            "id": "z-ai/glm-5.3-20260816",
+            "req_pct": 8.1,
+            "tok_pct": 14.3
           },
           {
             "id": "xiaomi/mimo-v2.6-flash-20260921",
-            "req_pct": 8.4,
-            "tok_pct": 11.1
-          },
-          {
-            "id": "typesafe/jev-1.13-20260917",
-            "req_pct": 4.8,
-            "tok_pct": 0.3
+            "req_pct": 7.7,
+            "tok_pct": 10.0
           }
         ]
       },
@@ -1957,28 +1957,28 @@
         "top_models": [
           {
             "id": "deepseek/deepseek-v4-flash-20260423",
-            "req_pct": 15.6,
-            "tok_pct": 6.5
+            "req_pct": 13.2,
+            "tok_pct": 6.0
           },
           {
             "id": "z-ai/glm-5.3-flash-20260826",
-            "req_pct": 11.0,
-            "tok_pct": 9.4
-          },
-          {
-            "id": "deepseek/deepseek-v4.1-flash-20260910",
-            "req_pct": 10.0,
-            "tok_pct": 17.9
+            "req_pct": 12.1,
+            "tok_pct": 10.1
           },
           {
             "id": "openai/gpt-6-luna-20260922",
+            "req_pct": 9.4,
+            "tok_pct": 5.5
+          },
+          {
+            "id": "deepseek/deepseek-v4.1-flash-20260910",
             "req_pct": 9.2,
-            "tok_pct": 5.7
+            "tok_pct": 17.7
           },
           {
             "id": "deepseek/deepseek-v4-flash-20260731",
-            "req_pct": 4.4,
-            "tok_pct": 2.8
+            "req_pct": 4.6,
+            "tok_pct": 3.0
           }
         ]
       },
@@ -1992,27 +1992,27 @@
           {
             "id": "openai/gpt-6-luna-20260922",
             "req_pct": 12.4,
-            "tok_pct": 7.9
+            "tok_pct": 8.3
           },
           {
             "id": "deepseek/deepseek-v4.1-flash-20260910",
-            "req_pct": 10.4,
-            "tok_pct": 17.6
+            "req_pct": 10.0,
+            "tok_pct": 16.0
           },
           {
             "id": "z-ai/glm-5.3-flash-20260826",
-            "req_pct": 7.9,
-            "tok_pct": 6.8
+            "req_pct": 8.0,
+            "tok_pct": 7.1
           },
           {
             "id": "deepseek/deepseek-v4-flash-20260423",
-            "req_pct": 7.3,
-            "tok_pct": 2.1
+            "req_pct": 6.5,
+            "tok_pct": 1.9
           },
           {
             "id": "tencent/hy4-preview-20260827",
             "req_pct": 5.2,
-            "tok_pct": 12.0
+            "tok_pct": 12.1
           }
         ]
       },
@@ -2025,28 +2025,28 @@
         "top_models": [
           {
             "id": "deepseek/deepseek-v4.1-flash-20260910",
-            "req_pct": 22.1,
-            "tok_pct": 19.3
+            "req_pct": 16.1,
+            "tok_pct": 15.8
           },
           {
             "id": "xiaomi/mimo-v2.6-flash-20260921",
-            "req_pct": 12.3,
-            "tok_pct": 10.3
+            "req_pct": 12.4,
+            "tok_pct": 10.2
           },
           {
             "id": "z-ai/glm-5.3-flash-20260826",
-            "req_pct": 9.0,
-            "tok_pct": 7.4
+            "req_pct": 10.7,
+            "tok_pct": 7.5
           },
           {
             "id": "stepfun/step-5-preview-20261008",
-            "req_pct": 6.1,
-            "tok_pct": 10.8
+            "req_pct": 5.1,
+            "tok_pct": 9.3
           },
           {
-            "id": "nvidia/nemotron-3-ultra-550b-a55b-20260604:free",
-            "req_pct": 5.0,
-            "tok_pct": 12.5
+            "id": "deepseek/deepseek-v4-flash-20260423",
+            "req_pct": 4.7,
+            "tok_pct": 1.9
           }
         ]
       },
@@ -2059,28 +2059,28 @@
         "top_models": [
           {
             "id": "deepseek/deepseek-v4.1-flash-20260910",
-            "req_pct": 11.0,
-            "tok_pct": 20.4
+            "req_pct": 9.8,
+            "tok_pct": 17.9
           },
           {
             "id": "xiaomi/mimo-v2.6-pro-20260921",
-            "req_pct": 6.4,
-            "tok_pct": 9.7
-          },
-          {
-            "id": "deepseek/deepseek-v4-flash-20260423",
-            "req_pct": 5.6,
-            "tok_pct": 1.8
+            "req_pct": 7.4,
+            "tok_pct": 10.4
           },
           {
             "id": "typesafe/jev-1.13-20260917",
             "req_pct": 4.4,
-            "tok_pct": 0.8
+            "tok_pct": 0.9
           },
           {
-            "id": "meta-llama/llama-3.1-8b-instruct",
-            "req_pct": 4.2,
-            "tok_pct": 0.3
+            "id": "deepseek/deepseek-v4-flash-20260423",
+            "req_pct": 4.4,
+            "tok_pct": 1.7
+          },
+          {
+            "id": "openai/gpt-6-luna-20260922",
+            "req_pct": 4.3,
+            "tok_pct": 2.8
           }
         ]
       },
@@ -2093,28 +2093,28 @@
         "top_models": [
           {
             "id": "openai/gpt-6-luna-20260922",
-            "req_pct": 15.2,
-            "tok_pct": 8.8
+            "req_pct": 16.1,
+            "tok_pct": 9.5
           },
           {
             "id": "deepseek/deepseek-v4.1-flash-20260910",
-            "req_pct": 11.7,
-            "tok_pct": 16.6
+            "req_pct": 10.8,
+            "tok_pct": 17.4
           },
           {
             "id": "openai/gpt-5.6-luna-20260709",
-            "req_pct": 6.5,
-            "tok_pct": 2.1
-          },
-          {
-            "id": "z-ai/glm-5.3-flash-20260826",
-            "req_pct": 6.1,
-            "tok_pct": 9.2
+            "req_pct": 7.6,
+            "tok_pct": 2.2
           },
           {
             "id": "xiaomi/mimo-v2.6-flash-20260921",
-            "req_pct": 6.1,
-            "tok_pct": 8.3
+            "req_pct": 6.3,
+            "tok_pct": 9.0
+          },
+          {
+            "id": "z-ai/glm-5.3-flash-20260826",
+            "req_pct": 6.0,
+            "tok_pct": 7.9
           }
         ]
       },
@@ -2127,28 +2127,28 @@
         "top_models": [
           {
             "id": "deepseek/deepseek-v4.1-flash-20260910",
-            "req_pct": 17.4,
-            "tok_pct": 18.9
+            "req_pct": 17.3,
+            "tok_pct": 18.3
           },
           {
             "id": "xiaomi/mimo-v2.6-flash-20260921",
-            "req_pct": 12.1,
+            "req_pct": 12.6,
             "tok_pct": 9.1
           },
           {
             "id": "z-ai/glm-5.3-flash-20260826",
-            "req_pct": 8.8,
-            "tok_pct": 8.1
-          },
-          {
-            "id": "stepfun/step-5-preview-20261008",
-            "req_pct": 5.9,
-            "tok_pct": 8.6
+            "req_pct": 6.4,
+            "tok_pct": 6.3
           },
           {
             "id": "nvidia/nemotron-3-ultra-550b-a55b-20260604:free",
-            "req_pct": 5.8,
-            "tok_pct": 13.0
+            "req_pct": 5.9,
+            "tok_pct": 13.7
+          },
+          {
+            "id": "stepfun/step-5-preview-20261008",
+            "req_pct": 5.2,
+            "tok_pct": 7.3
           }
         ]
       },
@@ -2161,28 +2161,28 @@
         "top_models": [
           {
             "id": "deepseek/deepseek-v4.1-flash-20260910",
-            "req_pct": 17.6,
-            "tok_pct": 22.6
+            "req_pct": 17.1,
+            "tok_pct": 23.4
           },
           {
             "id": "xiaomi/mimo-v2.6-flash-20260921",
-            "req_pct": 10.8,
-            "tok_pct": 8.7
+            "req_pct": 10.6,
+            "tok_pct": 8.8
           },
           {
             "id": "z-ai/glm-5.3-flash-20260826",
-            "req_pct": 8.3,
-            "tok_pct": 9.4
+            "req_pct": 8.1,
+            "tok_pct": 8.7
           },
           {
             "id": "stepfun/step-5-preview-20261008",
-            "req_pct": 6.0,
-            "tok_pct": 8.6
+            "req_pct": 4.7,
+            "tok_pct": 6.7
           },
           {
-            "id": "nvidia/nemotron-3-ultra-550b-a55b-20260604:free",
-            "req_pct": 4.9,
-            "tok_pct": 9.0
+            "id": "z-ai/glm-5.3-20260816",
+            "req_pct": 4.3,
+            "tok_pct": 4.7
           }
         ]
       }
