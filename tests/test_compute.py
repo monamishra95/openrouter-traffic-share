@@ -658,6 +658,42 @@ def test_page_reads_new_p1_fields_defensively():
     assert "t.token_to_request_ratio.toFixed" not in html
 
 
+def test_spend_price_coverage():
+    """Coverage is computed, not typed: priced tokens over the top models and
+    over all attributed traffic."""
+    import compute
+    rows = list(FIXTURE_ROWS) + [
+        {"date": "2026-08-01", "model_permaslug": "nopricevendor/m", "total_tokens": "300"}]
+    s = compute.token_shares({"_provenance": {}, "raw": {"data": rows}})
+    c = compute.estimated_spend(s, REGISTRY_DOC)["price_coverage"]
+    # priced: anthropic 200 + google 300 + deepseek 500 = 1000 of 1300 attributed
+    assert c["priced_tokens"] == 1000 and c["top_models_tokens"] == 1300, c
+    assert c["attributed_tokens"] == 1300 and c["top_models_count"] == 4, c
+    assert abs(c["pct_of_top_models"] - 76.923) < 0.001, c
+    assert c["pct_of_attributed"] == c["pct_of_top_models"]
+
+
+def test_page_prose_carries_no_hardcoded_figures():
+    """Figures in the page's prose drift from the data on every refresh (the
+    task paragraph claimed 27% / 72.5% while the data said 22.4% / 63.1%).
+    Static markup and the FORMULAS / DEFINITIONS text may not carry measured
+    percentages, multipliers or dates; they are rendered from computed.json."""
+    import re
+    html = _index_html_text()
+    markup = re.sub(r"<script.*?</script>|<style.*?</style>|<!--.*?-->", "", html, flags=re.S)
+    m = re.search(r"const FORMULAS = \[(.*?)\];\s*const DEFINITIONS = \[(.*?)\];", html, re.S)
+    assert m, "FORMULAS / DEFINITIONS blocks not found"
+    prose = markup + m.group(1) + m.group(2)
+    # Illustrative arithmetic, not measurements: shares close to 100%, and the
+    # movers example "a move from 2% to 4% is +2pp, not +100%".
+    allowed = {"100%", "2%", "4%", "+100%", "1.0×"}
+    figs = {f for f in re.findall(r"\+?\d+(?:\.\d+)?\s?[%×]", prose) if f.replace(" ", "") not in allowed}
+    assert not figs, f"hardcoded figures in page prose: {sorted(figs)}"
+    dates = [d for d in re.findall(r"(?<!DEF-)\b20\d\d-\d\d-\d\d\b", prose)]
+    assert not dates, f"hardcoded dates in page prose: {dates}"
+    assert not re.search(r"\b\d+-day\b", prose), "hardcoded window length in page prose"
+
+
 def test_every_chart_has_an_exportable_table():
     html = _index_html_text()
     for cid in ("c-scatter", "c-paired", "c-trend", "c-tasks", "c-spend", "c-open"):

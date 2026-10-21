@@ -377,6 +377,15 @@ def estimated_spend(shares, registry_doc):
     for x in rows:
         by_vendor[vendor_of(x["model"])] += x["estimated_usd"]
 
+    # How much of the volume the spend figure actually prices. The page used to
+    # state a coverage figure typed in by hand from one day's data; it drifts
+    # with every refresh, so it is computed here instead. Spend is built from
+    # the top models only, so coverage is reported against both those models
+    # and all attributed traffic.
+    priced = sum(x["tokens"] for x in rows)
+    considered = sum(r["tokens"] for r in shares["by_model"])
+    attributed = shares["totals"]["attributed_tokens"]
+
     return {
         "label": "Estimated routed spend (derived)",
         "total_usd": total,
@@ -384,6 +393,14 @@ def estimated_spend(shares, registry_doc):
         "by_vendor": [{"vendor": k, "estimated_usd": v, "share_pct": pct(v, total)}
                       for k, v in sorted(by_vendor.items(), key=lambda kv: -kv[1])],
         "models_without_pricing": missing,
+        "price_coverage": {
+            "priced_tokens": priced,
+            "top_models_tokens": considered,
+            "attributed_tokens": attributed,
+            "top_models_count": len(shares["by_model"]),
+            "pct_of_top_models": pct(priced, considered),
+            "pct_of_attributed": pct(priced, attributed),
+        },
         "assumptions": [
             "Tokens multiplied by published list prices from /api/v1/models.",
             "Prompt and completion prices are blended 50/50; the true split is not exposed per model.",

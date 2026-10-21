@@ -181,7 +181,7 @@
   <section id="sec-requests" class="sec on">
     <div class="panel">
       <h2>Traffic by task</h2>
-      <p class="sub">OpenRouter classifies traffic by <em>task</em> — what the request was doing — not by industry. Both measures are shown throughout, because they disagree sharply: <b>Code and Agent work is 27% of requests but 72.5% of tokens.</b> A view showing only tokens would tell you this market is dominated by coding; by request count it's dominated by classification, extraction and chat.</p>
+      <p class="sub">OpenRouter classifies traffic by <em>task</em> — what the request was doing — not by industry. Both measures are shown throughout, because they can disagree sharply.<span id="task-contrast"></span></p>
       <div class="caveat" id="task-window" style="border-left-color:var(--accent)"></div>
       <div class="chart" style="height:300px"><canvas id="c-tasks"></canvas></div>
       <div class="fx"><b>request share</b> and <b>token share</b> are published directly by /api/v1/classifications/task as fractions of <i>classified</i> traffic &nbsp;·&nbsp; ×100 only, no further arithmetic</div>
@@ -199,7 +199,7 @@
         <b>This is not enterprise spend.</b> No public API publishes enterprise API spend. This figure is computed here by multiplying token volume by each model's published list price. It covers gateway-routed traffic only and uses list rates, which negotiated enterprise contracts sit below.
       </div>
       <div class="chart"><canvas id="c-spend"></canvas></div>
-      <div class="fx"><b>per model</b> = tokens × (prompt price + completion price) ÷ 2 &nbsp;·&nbsp; joined on <b>canonical_slug</b> &nbsp;·&nbsp; covers 98.9% of attributed tokens &nbsp;·&nbsp; list prices, not negotiated rates</div>
+      <div class="fx"><b>per model</b> = tokens × (prompt price + completion price) ÷ 2 &nbsp;·&nbsp; joined on <b>canonical_slug</b> &nbsp;·&nbsp; <span id="spend-coverage">price coverage not reported by this build</span> &nbsp;·&nbsp; list prices, not negotiated rates</div>
       <div id="spend-assume" class="src"></div>
       <div class="xt" id="x-c-spend"></div>
     </div>
@@ -475,6 +475,18 @@ function render() {
     });
     document.getElementById('src-tasks').innerHTML =
       esc(seg.note) + '<br>' + provenance(d.generated_from['tasks.json']);
+
+    // The contrast sentence is written from the data on each load — it was
+    // once typed in, and drifted to figures the data no longer supported.
+    // Token-heavy categories use the same 1.5× threshold as the card pills.
+    const heavy = mc.filter(m => m.usage_share > 0 && m.token_share / m.usage_share >= 1.5)
+                    .sort((a,b) => b.token_share - a.token_share);
+    const topTok = [...mc].sort((a,b) => b.token_share - a.token_share)[0];
+    const topReq = [...seg.classifications].sort((a,b) => b.usage_share_pct - a.usage_share_pct).slice(0, 3);
+    const list = xs => xs.length < 2 ? xs.join('') : xs.slice(0, -1).join(', ') + ' and ' + xs[xs.length-1];
+    document.getElementById('task-contrast').innerHTML = (heavy.length && topTok && topReq.length) ? ' ' +
+      `<b>${esc(list(heavy.map(m => m.label)))} work is ${(100*heavy.reduce((a,m)=>a+m.usage_share,0)).toFixed(1)}% of requests but ${(100*heavy.reduce((a,m)=>a+m.token_share,0)).toFixed(1)}% of tokens.</b> ` +
+      `A view showing only tokens would put ${esc(topTok.label)} work first; by request count the largest tasks are ${esc(list(topReq.map(c => c.display_name)))}.` : '';
     const reqs = mc.map(m => +(m.usage_share*100).toFixed(2)), toks = mc.map(m => +(m.token_share*100).toFixed(2));
     exportTable('c-tasks', {
       caption: `Traffic by task — macro categories, trailing ${seg.window_days}-day window to ${seg.as_of}. Shares of classified traffic as published by the API; totals are the API's own sums.`,
@@ -520,6 +532,11 @@ function render() {
     const bv = sp.by_vendor.slice(0, 12);
     hbar('c-spend', bv.map(v=>v.vendor), [
       { label:'Share of estimated routed spend', data: bv.map(v=>v.share_pct), color:'#d29922' }]);
+    const cov = sp.price_coverage;
+    if (cov && typeof cov.pct_of_top_models === 'number')
+      document.getElementById('spend-coverage').textContent =
+        `prices found for ${cov.pct_of_top_models.toFixed(1)}% of top-${cov.top_models_count} model tokens` +
+        (typeof cov.pct_of_attributed === 'number' ? ` (${cov.pct_of_attributed.toFixed(1)}% of all attributed)` : '');
     const srest = sp.by_vendor.slice(12);
     exportTable('c-spend', {
       caption: `Estimated routed spend (derived) — tokens × blended list price, fixed window ${d.token_share.window.start} → ${d.token_share.window.end}. Not enterprise spend.`,
@@ -646,7 +663,7 @@ const FORMULAS = [
   { fig: 'Estimated routed spend (per model)',
     f: 'model tokens × (prompt price + completion price) ÷ 2',
     src: 'rankings-daily × /api/v1/models',
-    note: 'Joined on canonical_slug, not id — the ranking endpoint emits dated permaslugs. Price coverage: 98.9% of attributed tokens.' },
+    note: 'Joined on canonical_slug, not id — the ranking endpoint emits dated permaslugs. Price coverage: {COVERAGE}.' },
   { fig: 'Spend share',
     f: 'vendor estimated USD ÷ total estimated USD',
     src: 'derived',
@@ -674,7 +691,7 @@ const FORMULAS = [
   { fig: 'Category token-intensity ratio',
     f: 'category token share ÷ category request share',
     src: 'derived',
-    note: 'Above 1.0 = consumes more tokens than its share of calls. Current values are on each category card; they move with the 7-day task window.' },
+    note: 'Above 1.0 = consumes more tokens than its share of calls. Current values are on each category card; they move with {TASK_WINDOW}.' },
   { fig: 'Task token-to-request ratio',
     f: 'task token share ÷ task request share',
     src: 'derived from /api/v1/classifications/task (compute.py)',
@@ -719,23 +736,36 @@ const DEFINITIONS = [
   { t: 'What the tables under each chart contain',
     d: 'Each "Table & export" lists the values the chart plots, with the same rounding, followed by explicit rows for what the chart does not draw — remaining vendors, the "other" row, unclassified traffic — and a total. Copy CSV and Copy Markdown serialise that table as rendered, so a copy cannot disagree with the chart.' },
   { t: 'Which panels follow the time selector',
-    d: 'The selector drives vendor token share (the blue bars in the paired chart, and the exclusion note beneath it) and the Share over time tab. Spend share, the volume-versus-value scatter, open-weight share and both model tables stay on the full fixed window, because they are computed per model and only per-vendor weekly volumes are stored. The task tab uses the classifications endpoint\'s trailing 7-day window, the only one it publishes.' },
+    d: 'The selector drives vendor token share (the blue bars in the paired chart, and the exclusion note beneath it) and the Share over time tab. Spend share, the volume-versus-value scatter, open-weight share and both model tables stay on the full fixed window, because they are computed per model and only per-vendor weekly volumes are stored. The task tab uses {TASK_WINDOW}, the only window the classifications endpoint publishes.' },
   { t: 'Complete weeks only',
     d: 'Weeks start on Sunday, UTC. The daily feed is a rolling window that rarely begins on a Sunday or ends on a Saturday, so the first and last weeks are usually partial. They are dropped rather than plotted, because a short bucket beside full ones reads as a collapse in demand. The selector therefore offers at most the number of complete weeks stored.' },
   { t: 'Weekly lines and the top-50 cut-off',
     d: 'The daily feed lists the top 50 models and folds the rest into one "other" row with no vendor breakdown. A vendor\'s weekly line is its share of that top-50 attributed traffic: if one of its models slips out of the top 50, those tokens move to "other" and the line falls although demand may not have. Short-run movement can be ranking churn.' },
 ];
 
+/* Methodology text names no measured figure directly: {TOKENS} are filled from
+   computed.json on each load, with a plain fallback when a field is absent. */
+function fillFigures(s) {
+  const d = DATA, cov = d.estimated_spend && d.estimated_spend.price_coverage;
+  const wd = d.task_segmentation && d.task_segmentation.window_days;
+  return s
+    .replace('{COVERAGE}', cov && typeof cov.pct_of_top_models === 'number'
+      ? `${cov.pct_of_top_models.toFixed(1)}% of top-${cov.top_models_count} model tokens` +
+        (typeof cov.pct_of_attributed === 'number' ? `, ${cov.pct_of_attributed.toFixed(1)}% of all attributed tokens` : '')
+      : 'not reported by this build of compute.py')
+    .replace('{TASK_WINDOW}', typeof wd === 'number' ? `the trailing ${wd}-day task window` : 'the task feed\'s trailing window');
+}
+
 function renderMethod() {
   document.getElementById('formulas').innerHTML = table([
     { label:'Figure', get:r=>`<b>${esc(r.fig)}</b>` },
     { label:'Formula', get:r=>`<code>${esc(r.f)}</code>` },
     { label:'Source', get:r=>`<span style="color:var(--dim)">${esc(r.src)}</span>` },
-    { label:'Note', get:r=>`<span style="color:var(--dim);font-size:.92em">${esc(r.note)}</span>` },
+    { label:'Note', get:r=>`<span style="color:var(--dim);font-size:.92em">${esc(fillFigures(r.note))}</span>` },
   ], FORMULAS);
 
   document.getElementById('defs').innerHTML =
-    DEFINITIONS.map(x=>`<div style="margin-bottom:.9rem"><b>${esc(x.t)}</b><div style="color:var(--dim);font-size:.9rem">${esc(x.d)}</div></div>`).join('');
+    DEFINITIONS.map(x=>`<div style="margin-bottom:.9rem"><b>${esc(x.t)}</b><div style="color:var(--dim);font-size:.9rem">${esc(fillFigures(x.d))}</div></div>`).join('');
 
   const ts = DATA.token_share, t = ts.totals, r = ts.reconciliation || {};
   const vs = ts.by_vendor.reduce((a,v)=>a+v.share_pct, 0);
@@ -798,7 +828,7 @@ function renderTokenPanels() {
   // The scatter compares token share against spend share, so BOTH axes must
   // cover the same period. Spend cannot be recomputed per window (per-model
   // weekly volumes are not stored), so the scatter is pinned to the fixed
-  // 90-day window rather than plotting a windowed x against a fixed y — which
+  // full window rather than plotting a windowed x against a fixed y — which
   // would silently mix two periods in one chart and make the ratio meaningless.
   const scatterVendors = ts.by_vendor.slice(0, 12);
   const pts = scatterVendors.filter(v => spendMap[v.key] != null)
@@ -940,7 +970,7 @@ function renderTrend() {
 
 /* Recompute the token-share panels for the selected window. Spend and task data
    cannot follow it — spend needs per-model weekly volumes we don't store, and the
-   classifications endpoint publishes a 7-day window only. Rather than leave that
+   classifications endpoint publishes one short trailing window. Rather than leave that
    ambiguous, each panel states the window it actually covers. */
 function applyWindow() {
   const ser = DATA.series; if (!seriesOK(ser)) return;
