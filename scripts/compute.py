@@ -284,15 +284,39 @@ def classify_open_weight(model_id: str, licences_doc, registry_doc):
 def open_weight_share(shares, licences_doc, registry_doc):
     buckets = defaultdict(int)
     detail = []
-    denom = shares["totals"]["denominator"]
+    totals = shares["totals"]
+    denom = totals["denominator"]
     for row in shares["by_model"]:
         cls, evidence = classify_open_weight(row["key"], licences_doc, registry_doc)
         buckets[cls] += row["tokens"]
         detail.append({"model": row["key"], "tokens": row["tokens"],
                        "classification": cls, "evidence": evidence})
+
+    # Only the top-50 models are classified, but shares are over the full
+    # denominator. The remainder used to vanish: the bar summed to ~88% and
+    # nothing said where the other ~12% went. It is two things, reported
+    # separately — attributed models ranked below 50th, and the API's "other"
+    # row, which has no model identity to classify at all.
+    classified = sum(buckets.values())
+    beyond_top = totals["attributed_tokens"] - classified
+    other = totals["other_tokens"]
+    unclassified = beyond_top + other
+    if classified + unclassified != denom:
+        raise ReconciliationError(
+            f"open-weight: classified {classified} + unclassified {unclassified} != {denom}")
+
     return {
         "buckets": [{"classification": k, "tokens": v, "share_pct": pct(v, denom)}
                     for k, v in sorted(buckets.items(), key=lambda kv: -kv[1])],
+        "unclassified": {
+            "tokens": unclassified,
+            "share_pct": pct(unclassified, denom),
+            "beyond_top_models_tokens": beyond_top,
+            "other_row_tokens": other,
+            "note": (f"Not classified: attributed models ranked below the top {len(shares['by_model'])}, "
+                     "and the API's aggregate 'other' row, which carries no model identity. "
+                     "Kept in the denominator, never assigned a licence class."),
+        },
         "models": detail,
         "method": (
             "Licence taken from each model's HuggingFace repository. 'open' means a standard "
@@ -415,6 +439,20 @@ def _normalise_top_models(models):
     return out
 
 
+def token_to_request_ratio(token_share, usage_share):
+    """Payload heaviness per request: share of tokens ÷ share of requests.
+
+    Taken from the unrounded fractions, not the two-decimal percentages, so a
+    small task's ratio is not distorted by rounding. None when the request
+    share is zero or either input is unusable — the page renders a dash, never
+    Infinity.
+    """
+    ok = lambda v: isinstance(v, (int, float)) and not isinstance(v, bool)
+    if not (ok(token_share) and ok(usage_share)) or usage_share <= 0:
+        return None
+    return token_share / usage_share
+
+
 class UpstreamContractChanged(RuntimeError):
     """Raised when a feed still parses but no longer means what we read it as."""
 
@@ -429,6 +467,7 @@ def task_segmentation(tasks_doc):
          "macro_category": c["macro_category"],
          "usage_share_pct": round(c["usage_share"] * 100, 2),
          "token_share_pct": round(c["token_share"] * 100, 2),
+         "token_to_request_ratio": token_to_request_ratio(c["token_share"], c["usage_share"]),
          "top_models": _normalise_top_models(c.get("models", []))[:5]}
         for c in raw_cls
     ]

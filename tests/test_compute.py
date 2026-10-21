@@ -581,6 +581,93 @@ def test_committed_output_carries_a_usable_series():
     assert s["covered"]["days"] + s["days_dropped"]["total"] == d["token_share"]["window"]["days"]
 
 
+# --- P1: per-task intensity, open-weight closure ----------------------------
+
+def _task_doc(classifications):
+    return {"raw": {"data": {"as_of": "2026-01-01", "window_days": 7,
+                             "macro_categories": [], "classifications": classifications}}}
+
+
+def test_task_token_to_request_ratio():
+    import compute
+    out = compute.task_segmentation(_task_doc([
+        {"tag": "code", "display_name": "Code", "macro_category": "code",
+         "usage_share": 0.112, "token_share": 0.356, "models": []},
+        {"tag": "cls", "display_name": "Classification", "macro_category": "general",
+         "usage_share": 0.302, "token_share": 0.072, "models": []},
+    ]))
+    r = {c["tag"]: c["token_to_request_ratio"] for c in out["classifications"]}
+    # from the unrounded fractions: 0.356 / 0.112 and 0.072 / 0.302
+    assert abs(r["code"] - 3.178571) < 1e-6, r
+    assert abs(r["cls"] - 0.238411) < 1e-6, r
+
+
+def test_task_ratio_never_infinite():
+    """Zero or missing request share yields None (rendered as a dash), not Infinity."""
+    import compute
+    assert compute.token_to_request_ratio(0.05, 0) is None
+    assert compute.token_to_request_ratio(0.05, 0.0) is None
+    assert compute.token_to_request_ratio(0.05, None) is None
+    assert compute.token_to_request_ratio(None, 0.1) is None
+    assert compute.token_to_request_ratio(True, 0.1) is None
+    assert compute.token_to_request_ratio(0, 0.1) == 0
+    out = compute.task_segmentation(_task_doc([
+        {"tag": "z", "display_name": "Z", "macro_category": "general",
+         "usage_share": 0, "token_share": 0.01, "models": []}]))
+    assert out["classifications"][0]["token_to_request_ratio"] is None
+    json.dumps(out, allow_nan=False)      # no Infinity / NaN can reach computed.json
+
+
+def test_open_weight_buckets_close_to_100():
+    """Regression for DEF-2026-10-20-003: classified buckets + the unclassified
+    remainder == denominator. The bar used to sum to ~88% with no explanation."""
+    import compute
+    # 60 attributed models: only the top 50 are classified; plus an 'other' row.
+    rows = [{"date": "2026-08-01", "model_permaslug": f"v{i % 3}/m{i}", "total_tokens": str(1000 - i)}
+            for i in range(60)]
+    rows.append({"date": "2026-08-01", "model_permaslug": "other", "total_tokens": "5000"})
+    s = compute.token_shares({"_provenance": {}, "raw": {"data": rows}})
+    ow = compute.open_weight_share(s, LICENCES_DOC, REGISTRY_DOC)
+    u = ow["unclassified"]
+    classified = sum(b["tokens"] for b in ow["buckets"])
+    assert classified + u["tokens"] == s["totals"]["denominator"], (classified, u)
+    assert u["other_row_tokens"] == 5000, u
+    assert u["beyond_top_models_tokens"] == sum(1000 - i for i in range(50, 60)), u
+    share_sum = sum(b["share_pct"] for b in ow["buckets"]) + u["share_pct"]
+    assert abs(share_sum - 100.0) < 0.05, share_sum
+    assert "unknown" in {b["classification"] for b in ow["buckets"]}
+    assert "unclassified" not in {b["classification"] for b in ow["buckets"]}, \
+        "'not classified' must stay distinct from 'unknown'"
+
+
+def test_open_weight_unclassified_with_fixture():
+    def run(compute):
+        s = compute.token_shares(TOKENS_DOC)
+        ow = compute.open_weight_share(s, LICENCES_DOC, REGISTRY_DOC)
+        # all 3 models classified; only the 200-token 'other' row remains
+        assert ow["unclassified"]["tokens"] == 200, ow["unclassified"]
+        assert ow["unclassified"]["beyond_top_models_tokens"] == 0
+    with_fixture(run)
+
+
+def test_page_reads_new_p1_fields_defensively():
+    html = _index_html_text()
+    assert "token_to_request_ratio" in html, "per-task ratio not rendered"
+    assert "fmtRatio(" in html, "ratio must go through the dash-on-invalid formatter"
+    assert "ow.unclassified" in html, "open-weight remainder not rendered"
+    assert "t.token_to_request_ratio.toFixed" not in html
+
+
+def test_every_chart_has_an_exportable_table():
+    html = _index_html_text()
+    for cid in ("c-scatter", "c-paired", "c-trend", "c-tasks", "c-spend", "c-open"):
+        assert f"exportTable('{cid}'" in html or f"vendorShareTable('{cid}'" in html, \
+            f"{cid} has no data table / export"
+        assert f'id="x-{cid}"' in html, f"{cid} has no table container in the DOM"
+    for fn in ("tableToCSV(", "tableToMarkdown("):
+        assert fn in html, fn
+
+
 if __name__ == "__main__":
     for name, fn in sorted(list(globals().items())):
         if name.startswith("test_") and callable(fn):

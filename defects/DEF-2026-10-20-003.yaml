@@ -1,0 +1,45 @@
+id: DEF-2026-10-20-003
+project: openrouter-traffic-share
+class: C1            # logic: shares computed over a denominator larger than the classified set
+severity: SEV1       # escaped (S4) -> SEV1 per PROTOCOL §1.3
+stage_detected: S4
+stage_should_have: S0-builder
+owner_agent: builder
+model: unknown       # introducing model not recorded in the commit history
+description: >
+  The open-weight bar summed to 87.82% of routed tokens with nothing marking
+  the gap. open_weight_share() classified only token_share.by_model (top 50)
+  but divided by the full denominator (attributed + "other"). The missing
+  12.18% — attributed models ranked below 50th (5.46%) and the API's "other"
+  row (6.72%) — was silently dropped from the chart, the headline and the
+  method text. Violates the project's rule that shares close to 100%.
+evidence: >
+  computed.json at 7331615: open_weight.buckets share_pct = 53.07 + 28.61 +
+  6.14 = 87.82; denominator 1,406.81T vs classified 1,235.47T.
+root_cause: >
+  Classification was bounded to the top-50 list while the share arithmetic
+  used the global denominator, and no reconciliation assertion covered the
+  open-weight split — the 90-day assertion covers vendors only.
+lesson_file:         # written by Librarian
+regression_artifact: >
+  tests/test_compute.py::test_open_weight_buckets_close_to_100 and
+  ::test_open_weight_unclassified_with_fixture; compute.py raises
+  ReconciliationError if classified + unclassified != denominator. The
+  Reconciliation panel now prints the open-weight closure.
+promotion: memory    # first occurrence of this root cause; Librarian to confirm
+recurrence_of: null
+model_specific: false
+status: open
+
+# Postmortem (PROTOCOL §1.8, required for S4)
+# 1. What happened? The open-weight split dropped 12% of the denominator
+#    without saying so.
+# 2. Earliest realistic catch point? S0 — a closure assertion when the split
+#    was written.
+# 3. Why did that gate miss it? Reconciliation was asserted for vendor shares
+#    only; every other share family was assumed to close.
+# 4. What rule or gate changed? Every share family on the page closes in code
+#    (vendor, weekly, open-weight), and every chart's table shows its total.
+# 5. What artifact now makes recurrence impossible? The tests above, plus the
+#    Total row in each chart's export table, which makes a gap visible on the
+#    page itself.
