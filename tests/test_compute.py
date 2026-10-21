@@ -420,6 +420,167 @@ def test_render_failure_is_not_reported_as_missing_data():
     )
 
 
+# --- Weekly series (P0) ------------------------------------------------------
+#
+# index.html has read DATA.series since the trend tab was built; compute.py never
+# produced it, so the selector and trend tab did nothing. These tests hold the
+# producer to the same rules as the 90-day aggregate.
+#
+# Fixture: 2026-08-01 (Sat) .. 2026-08-18 (Tue), 18 days.
+#   complete Sunday-start weeks: 08-02..08-08, 08-09..08-15  -> 2 weeks
+#   dropped: 08-01 leading (1 day), 08-16..08-18 trailing (3 days)
+# Day k (0-based) carries k-dependent volumes so a bucketing error shows up in
+# the sums, a cloaked openrouter/* model, and a vendor present only on some days.
+from datetime import date as _date, timedelta as _td
+
+WEEKLY_ROWS = []
+for k in range(18):
+    d = (_date(2026, 8, 1) + _td(days=k)).isoformat()
+    WEEKLY_ROWS += [
+        {"date": d, "model_permaslug": "anthropic/claude-x", "total_tokens": str(100 + k)},
+        {"date": d, "model_permaslug": "google/gemini-x", "total_tokens": str(150 + 2 * k)},
+        {"date": d, "model_permaslug": "deepseek/ds-x", "total_tokens": "250"},
+        {"date": d, "model_permaslug": "stealth/ox-alpha", "total_tokens": "400"},
+        {"date": d, "model_permaslug": "openrouter/owl-alpha", "total_tokens": "30"},
+        {"date": d, "model_permaslug": "other", "total_tokens": str(100 + k)},
+    ]
+    if k % 3 == 0:     # drops in and out of the top 50
+        WEEKLY_ROWS.append({"date": d, "model_permaslug": "mistralai/m-x", "total_tokens": "70"})
+WEEKLY_DOC = {"_provenance": {}, "raw": {"data": WEEKLY_ROWS}}
+
+
+def _weekly():
+    import compute
+    return compute, compute.weekly_series(WEEKLY_DOC)
+
+
+def test_weekly_drops_partial_weeks_at_both_ends():
+    compute, s = _weekly()
+    assert s["weeks"] == ["2026-08-02", "2026-08-09"], s["weeks"]
+    assert s["days_dropped"] == {"leading": 1, "trailing": 3, "total": 4}, s["days_dropped"]
+    assert s["covered"] == {"start": "2026-08-02", "end": "2026-08-15", "days": 14}, s["covered"]
+    for k, v in s["vendors"].items():
+        assert len(v) == len(s["weeks"]), (k, v)
+    # week 1 = days k=1..7: anthropic 100+k -> 7*100 + (1+..+7) = 728
+    assert s["vendors"]["anthropic"] == [728, 777], s["vendors"]["anthropic"]
+    # mistral appears on k in {3,6} in week 1 and {9,12} in week 2; zero-filled otherwise
+    assert s["vendors"]["mistralai"] == [140, 140], s["vendors"]["mistralai"]
+
+
+def test_weekly_shares_close_to_100_in_every_week():
+    compute, s = _weekly()
+    names = [k for k in s["vendors"] if not k.startswith("_")]
+    for i, wk in enumerate(s["weeks"]):
+        listed = sum(s["vendors"][k][i] for k in names)
+        assert listed + s["vendors"]["_other"][i] == s["denominator"][i], wk
+        share_sum = sum(compute.pct(s["vendors"][k][i], s["denominator"][i]) for k in names) \
+            + compute.pct(s["vendors"]["_other"][i], s["denominator"][i])
+        assert abs(share_sum - 100.0) < 0.05, (wk, share_sum)
+    assert s["reconciliation"] == {"weeks_checked": 2, "sums_exactly": True}
+
+
+def test_weekly_excludes_unattributed_on_the_aggregate_rule():
+    compute, s = _weekly()
+    names = {k for k in s["vendors"] if not k.startswith("_")}
+    assert names == {"anthropic", "google", "deepseek", "mistralai"}, names
+    assert "stealth" not in names and "openrouter" not in names
+    # stealth 400 + cloaked openrouter/owl-alpha 30, every day, 7 days a week
+    assert s["vendors"]["_unattributed"] == [3010, 3010], s["vendors"]["_unattributed"]
+    for i in range(len(s["weeks"])):
+        assert s["denominator"][i] == sum(s["vendors"][k][i] for k in names) + s["vendors"]["_other"][i]
+
+
+def test_weekly_series_uses_the_same_rules_as_the_headline():
+    """Summed over its covered days, the series must equal token_shares() run on
+    exactly those days. Any divergence in vendor derivation or exclusion fails."""
+    import compute
+    s = compute.weekly_series(WEEKLY_DOC)
+    lo, hi = s["covered"]["start"], s["covered"]["end"]
+    covered = {"_provenance": {}, "raw": {"data": [r for r in WEEKLY_ROWS if lo <= r["date"] <= hi]}}
+    agg = compute.token_shares(covered)
+    for v in agg["by_vendor"]:
+        assert sum(s["vendors"][v["key"]]) == v["tokens"], v
+    assert sum(s["vendors"]["_other"]) == agg["totals"]["other_tokens"]
+    assert sum(s["vendors"]["_unattributed"]) == agg["totals"]["unattributed_tokens"]
+    assert sum(s["denominator"]) == agg["totals"]["denominator"]
+
+
+def test_weekly_series_absent_when_no_complete_week():
+    """Two days (Sat, Sun) contain no full week. Absent, not an empty shell."""
+    import compute
+    assert compute.weekly_series(TOKENS_DOC) is None
+
+
+def test_weekly_gap_inside_a_complete_week_fails_loudly():
+    import compute
+    rows = [r for r in WEEKLY_ROWS if r["date"] != "2026-08-05"]
+    try:
+        compute.weekly_series({"_provenance": {}, "raw": {"data": rows}})
+    except compute.ReconciliationError as e:
+        assert "2026-08-05" in str(e), e
+        return
+    raise AssertionError("a 6-day bucket was emitted as a complete week")
+
+
+def test_weekly_note_and_known_unknowns_disclose_top50_churn():
+    import compute
+    _, s = _weekly()
+    for text in (s["note"].lower(), json.dumps(compute.KNOWN_UNKNOWNS).lower()):
+        assert "top 50" in text and "churn" in text and "demand" in text, text[:200]
+
+
+def test_90_day_reconciliation_is_emitted_for_the_page():
+    """index.html's Reconciliation panel reads token_share.reconciliation. With
+    nothing emitting it, the panel printed 'FAILS' over data that closes."""
+    import compute
+    rows = [r for r in WEEKLY_ROWS]
+    s = compute.token_shares({"_provenance": {}, "raw": {"data": rows}})
+    r = s["reconciliation"]
+    assert r["sums_exactly"] is True
+    assert r["listed_vendors"] + r["tail_vendors"] + s["totals"]["other_tokens"] \
+        == s["totals"]["denominator"], r
+    html = _index_html_text()
+    for k in ("listed_vendors", "tail_vendors", "sums_exactly"):
+        assert f"r.{k}" in html, f"index.html no longer reads reconciliation.{k}"
+
+
+def test_page_reads_only_series_fields_the_producer_emits():
+    """DEF-2026-09-21-001 seam, held for the series: every series field the page
+    dereferences must be one compute.weekly_series() emits, and the page must
+    gate the trend tab on a validity check rather than a bare truthiness test."""
+    import re
+    _, s = _weekly()
+    html = _index_html_text()
+    # The page names the series `ser` everywhere it reads it.
+    read = set(re.findall(r"\bser\.(\w+)", html))
+    assert read, "index.html no longer reads the series through `ser`"
+    unknown = read - set(s)
+    assert not unknown, f"index.html reads series fields compute.py does not emit: {unknown}"
+    for outer, inner in set(re.findall(r"\bser\.(\w+)\.(\w+)", html)):
+        if isinstance(s[outer], dict):       # e.g. ser.days_dropped.total
+            assert inner in s[outer], f"index.html reads ser.{outer}.{inner}; not emitted"
+    for k in ("_other", "_unattributed"):
+        assert k in s["vendors"] and k in html, k
+    assert "seriesOK(" in html, "the series validity gate is gone from index.html"
+    assert "if (d.series)" not in html, "trend view gated on bare truthiness again"
+
+
+def test_committed_output_carries_a_usable_series():
+    """Ship order: computed.json is committed alongside the page that reads it."""
+    live = ROOT / "data" / "computed.json"
+    if not live.exists() or not (ROOT / "data" / "tokens-daily.json").exists():
+        return
+    d = json.loads(live.read_text(encoding="utf-8"))
+    s = d.get("series")
+    assert s, "computed.json has no series; the trend tab will be hidden"
+    n = len(s["weeks"])
+    assert n >= 4, n
+    for k, v in s["vendors"].items():
+        assert len(v) == n, k
+    assert s["covered"]["days"] == 7 * n
+    assert s["covered"]["days"] + s["days_dropped"]["total"] == d["token_share"]["window"]["days"]
+
+
 if __name__ == "__main__":
     for name, fn in sorted(list(globals().items())):
         if name.startswith("test_") and callable(fn):

@@ -70,6 +70,7 @@
   .attrib a:hover{text-decoration:underline}
   .attrib .lnk{cursor:pointer;color:var(--accent)}
   code{background:#0d1117;padding:.1rem .35rem;border-radius:3px;font-size:.85em}
+  [hidden]{display:none!important}
 </style>
 </head>
 <body>
@@ -92,12 +93,13 @@
   </div>
 
   <!-- Global window control. Every panel states the window its data covers, and
-       panels that cannot follow this selector say so rather than staying silent. -->
-  <div class="panel" style="padding:.75rem 1.1rem;display:flex;align-items:center;gap:.6rem;flex-wrap:wrap">
+       panels that cannot follow this selector say so rather than staying silent.
+       Hidden until computed.json carries a usable weekly series: the options are
+       built from series.weeks.length, so they can never offer more history than
+       is stored. -->
+  <div class="panel" id="win-panel" hidden style="padding:.75rem 1.1rem;display:flex;align-items:center;gap:.6rem;flex-wrap:wrap">
     <b style="font-size:.85rem">Time window</b>
-    <button class="tf" data-w="4">4 weeks</button>
-    <button class="tf on" data-w="13">13 weeks</button>
-    <button class="tf" data-w="26">26 weeks</button>
+    <span id="win-opts"></span>
     <span id="win-label" style="color:var(--dim);font-size:.8rem;margin-left:.4rem"></span>
   </div>
 
@@ -105,7 +107,7 @@
     <button class="tab on" data-sec="requests">Request share by task</button>
     <button class="tab" data-sec="open">Open-weight share</button>
     <button class="tab" data-sec="tokens">Volume vs value</button>
-    <button class="tab" data-sec="trend">Share over time</button>
+    <button class="tab" data-sec="trend" hidden>Share over time</button>
     <button class="tab" data-sec="spend">Estimated spend <span class="pill derived">derived</span></button>
     <button class="tab" data-sec="method">Methodology &amp; data fidelity</button>
   </div>
@@ -116,14 +118,16 @@
       <h2>Volume versus value</h2>
       <p class="sub" style="margin-bottom:.5rem">Each dot is a vendor. Horizontal axis is share of tokens routed; vertical axis is share of estimated spend. The diagonal is parity — a vendor sitting on it earns exactly in proportion to the volume it moves. <b>Above the line, a vendor captures more value than volume. Below it, the reverse.</b> Dot size is absolute token volume.</p>
       <div class="chart" style="height:420px"><canvas id="c-scatter"></canvas></div>
-      <div class="fx"><b>x</b> = vendor tokens ÷ (attributed + other) &nbsp;·&nbsp; <b>y</b> = vendor est. USD ÷ total est. USD &nbsp;·&nbsp; <b>ratio</b> = y ÷ x &nbsp;·&nbsp; dot area ∝ absolute tokens<br><b>Both axes: fixed 90-day window, 2026-06-02 → 2026-08-30.</b> Not affected by the time selector.</div>
+      <div class="fx"><b>x</b> = vendor tokens ÷ (attributed + other) &nbsp;·&nbsp; <b>y</b> = vendor est. USD ÷ total est. USD &nbsp;·&nbsp; <b>ratio</b> = y ÷ x &nbsp;·&nbsp; dot area ∝ absolute tokens<br><b>Both axes: fixed window, <span class="winfixed"></span>.</b> Not affected by the time selector.</div>
       <div class="src" id="scatter-note"></div>
     </div>
 
     <div class="panel">
       <h2>Token share and spend share, side by side</h2>
+      <p class="sub" style="margin-bottom:.5rem">Token share: <span class="winbadge"></span> &nbsp;·&nbsp; Spend share: <span class="winfixed"></span></p>
       <div class="chart" style="height:420px"><canvas id="c-paired"></canvas></div>
-      <div class="fx"><b>token share</b> = vendor tokens ÷ (attributed + other), recomputed for the selected window &nbsp;·&nbsp; <b>spend share</b> = vendor est. USD ÷ total, fixed 90-day window</div>
+      <div class="fx"><b>token share</b> = vendor tokens ÷ (attributed + other), <span id="paired-tok-basis">over the fixed window</span> &nbsp;·&nbsp; <b>spend share</b> = vendor est. USD ÷ total, fixed window</div>
+      <div class="src" id="paired-note"></div>
       <div id="excl" class="src"></div>
       <div class="src" id="src-tokens"></div>
     </div>
@@ -138,6 +142,7 @@
   <section id="sec-trend" class="sec">
     <div class="panel">
       <h2>Share over time</h2>
+      <p class="sub" style="margin-bottom:.5rem">Window: <span class="winbadge"></span></p>
       <div class="tframe">
         <label style="display:inline;margin-right:.4rem">Measure</label>
         <button class="tf tm on" data-m="pct">Share %</button>
@@ -145,7 +150,8 @@
         <span style="color:var(--dim);font-size:.8rem;margin-left:.8rem">Window is set globally above.</span>
       </div>
       <div class="chart" style="height:440px"><canvas id="c-trend"></canvas></div>
-      <div class="fx"><b>share %</b> = weekly vendor tokens ÷ (all vendors + other) that week &nbsp;·&nbsp; weekly buckets, week starting Sunday UTC &nbsp;·&nbsp; top 8 ranked within the selected window</div>
+      <div class="fx"><b>share %</b> = weekly vendor tokens ÷ (all vendors + other) that week &nbsp;·&nbsp; weekly buckets, week starting Sunday UTC, complete weeks only &nbsp;·&nbsp; top 8 ranked within the selected window</div>
+      <div class="caveat" style="border-left-color:var(--warn);margin-top:.6rem"><b>Ranking churn, not only demand.</b> These lines are share of the daily top-50 attributed traffic. Everything outside the daily top 50 arrives as one "other" row whose vendor mix is not published, so when a vendor's model drops out of the top 50 its line falls for reasons unrelated to demand. Read short-run moves as possibly ranking churn.</div>
       <div class="src" id="trend-note"></div>
     </div>
     <div class="panel">
@@ -185,7 +191,7 @@
     <div class="panel">
       <h2>Open-weight versus proprietary</h2>
       <div class="caveat" id="open-headline" style="border-left-color:var(--good)"></div>
-      <p class="sub">Measured on <b>share of routed token traffic</b>, not on how many models exist — one high-volume open model outweighs many rarely-used ones. Window: <span class="winbadge"></span></p>
+      <p class="sub">Measured on <b>share of routed token traffic</b>, not on how many models exist — one high-volume open model outweighs many rarely-used ones. Window: <span class="winfixed"></span> — fixed, because licence class is per model and the weekly series is stored per vendor.</p>
       <div class="chart" style="height:170px"><canvas id="c-open"></canvas></div>
       <div class="fx"><b>share</b> = Σ tokens of models in that licence class ÷ (attributed + other) &nbsp;·&nbsp; measured on <b>token traffic</b>, not model count</div>
       <div id="open-method" style="margin-top:1rem"></div>
@@ -322,6 +328,9 @@ function render() {
 
   document.getElementById('window-label').textContent =
     `${ts.window.start} to ${ts.window.end} · ${ts.window.days} days`;
+  // Panels pinned to the full aggregate window. Read from the data, never typed.
+  document.querySelectorAll('.winfixed').forEach(el =>
+    el.textContent = `${ts.window.start} → ${ts.window.end} (${ts.window.days} days)`);
 
   // Date comes from the API's own meta.as_of, carried through the fetch layer,
   // so it advances on every scheduled refresh without anyone editing the page.
@@ -427,8 +436,54 @@ function render() {
   document.getElementById('t-unknown').innerHTML =
     d.known_unknowns.map(u=>`<li><b>${esc(u.question)}</b><span>${esc(u.why)}</span></li>`).join('');
 
-  if (d.series) applyWindow(); else renderTokenPanels();
+  // The weekly series is produced by compute.py and the page is deployed
+  // separately, so for a while one may be newer than the other. Absent or
+  // malformed series: hide the selector and the trend tab, keep everything else
+  // on the fixed window. Never let the trend view take the other panels down
+  // with it (DEF-2026-09-21-001).
+  const ser = d.series;
+  if (seriesOK(ser)) {
+    setupWindowOptions(ser);
+    document.getElementById('win-panel').hidden = false;
+    document.querySelector('.tab[data-sec="trend"]').hidden = false;
+    document.getElementById('paired-tok-basis').textContent = 'recomputed for the selected window';
+    applyWindow();
+  } else {
+    document.getElementById('win-panel').hidden = true;
+    document.querySelector('.tab[data-sec="trend"]').hidden = true;
+    document.getElementById('paired-tok-basis').textContent = 'over the fixed window';
+    document.querySelectorAll('.winbadge').forEach(el =>
+      el.textContent = `${ts.window.start} → ${ts.window.end} (${ts.window.days} days)`);
+    renderTokenPanels();
+  }
 }
+
+/* A series is usable only if every column lines up with the week labels and the
+   two non-vendor buckets are present — without _other the shares would not close,
+   and without _unattributed the exclusion note would claim 0%. */
+function seriesOK(ser) {
+  if (!ser || typeof ser !== 'object' || !Array.isArray(ser.weeks) || !ser.weeks.length) return false;
+  if (!ser.vendors || typeof ser.vendors !== 'object') return false;
+  if (!Array.isArray(ser.vendors._other) || !Array.isArray(ser.vendors._unattributed)) return false;
+  const n = ser.weeks.length;
+  return Object.values(ser.vendors).every(a =>
+    Array.isArray(a) && a.length === n && a.every(x => typeof x === 'number' && isFinite(x)));
+}
+
+/* Options come from how many complete weeks are stored, so they stay honest if
+   the fetch window changes: 4, 8 and the full history, whichever fit. */
+function setupWindowOptions(ser) {
+  const max = ser.weeks.length;
+  const opts = [...new Set([4, 8, max].filter(w => w <= max))].sort((a,b) => a-b);
+  TF.weeks = max;
+  document.getElementById('win-opts').innerHTML = opts.map(w =>
+    `<button class="tf${w===max?' on':''}" data-w="${w}">${w} week${w===1?'':'s'}</button>`).join('');
+}
+
+const addDays = (iso, n) => {
+  const t = new Date(iso + 'T00:00:00Z'); t.setUTCDate(t.getUTCDate() + n);
+  return t.toISOString().slice(0, 10);
+};
 
 /* ── formulas & method ───────────────────────────────────────────────────── */
 const FORMULAS = [
@@ -476,10 +531,18 @@ const FORMULAS = [
     f: 'published by the API as tag_usage_share / tag_token_share',
     src: '/api/v1/classifications/task',
     note: 'Share of that task\'s requests and tokens. Only the top models are returned, so these sum to less than 100%.' },
+  { fig: 'Weekly vendor share (trend)',
+    f: 'vendor tokens in week ÷ (all vendors + other) in the same week',
+    src: 'rankings-daily, bucketed into complete Sunday-start UTC weeks by compute.py',
+    note: 'Same vendor and exclusion rules as the headline share. Partial weeks at either end of the feed are dropped and the count of dropped days is stated on the chart. Asserted in code: Σ vendors + other == denominator in every week. Describes share of top-50 attributed traffic, so a model leaving the daily top 50 moves its tokens into "other".' },
   { fig: 'Windowed vendor share (time selector)',
     f: 'Σ weekly vendor tokens in window ÷ (Σ all vendors + Σ other) in the same window',
     src: 'rankings-daily, bucketed weekly',
-    note: 'Recomputed client-side per window. Vendors are ranked within the window, so a 4-week view shows who is large now.' },
+    note: 'Recomputed client-side per window from the weekly series. Vendors are ranked within the window, so a 4-week view shows who is large now. Spend share, the scatter, open-weight share and model tables stay on the fixed window.' },
+  { fig: 'Windowed excluded traffic %',
+    f: 'Σ weekly unattributed ÷ (Σ weekly denominator + Σ weekly unattributed) in window',
+    src: 'rankings-daily, bucketed weekly',
+    note: 'The exclusion note under the paired bars follows the selector, on the same basis as the headline unattributed %.' },
   { fig: 'Movers (percentage-point change)',
     f: 'share in final week − share in first week of the window',
     src: 'derived',
@@ -499,8 +562,12 @@ const DEFINITIONS = [
     d: 'Open = permissive licence (MIT, Apache-2.0) confirmed on the model\'s HuggingFace repo. Open-restricted = weights published under a bespoke licence carrying use restrictions. Proprietary = the vendor publishes no weights for that line (Anthropic entirely; Google\'s Gemini line, as distinct from Gemma; OpenAI apart from gpt-oss). Unknown means unestablished — never a guess, and never a stand-in for proprietary.' },
   { t: 'Why token counts are not comparable across vendors',
     d: 'Each provider counts with its own tokenizer, so summing tokens across vendors adds unlike units. This is OpenRouter\'s own caveat. Request share is offered alongside as the more comparable measure.' },
-  { t: 'Why the task tab has a different window',
-    d: 'The classifications endpoint publishes a trailing 7-day window only; no other window is supported. Every other tab follows the global selector.' },
+  { t: 'Which panels follow the time selector',
+    d: 'The selector drives vendor token share (the blue bars in the paired chart, and the exclusion note beneath it) and the Share over time tab. Spend share, the volume-versus-value scatter, open-weight share and both model tables stay on the full fixed window, because they are computed per model and only per-vendor weekly volumes are stored. The task tab uses the classifications endpoint\'s trailing 7-day window, the only one it publishes.' },
+  { t: 'Complete weeks only',
+    d: 'Weeks start on Sunday, UTC. The daily feed is a rolling window that rarely begins on a Sunday or ends on a Saturday, so the first and last weeks are usually partial. They are dropped rather than plotted, because a short bucket beside full ones reads as a collapse in demand. The selector therefore offers at most the number of complete weeks stored.' },
+  { t: 'Weekly lines and the top-50 cut-off',
+    d: 'The daily feed lists the top 50 models and folds the rest into one "other" row with no vendor breakdown. A vendor\'s weekly line is its share of that top-50 attributed traffic: if one of its models slips out of the top 50, those tokens move to "other" and the line falls although demand may not have. Short-run movement can be ranking churn.' },
 ];
 
 function renderMethod() {
@@ -519,19 +586,41 @@ function renderMethod() {
   const os = 100*t.other_tokens/t.denominator;
   document.getElementById('recon').innerHTML = table([
     { label:'Component', get:x=>x.k },
-    { label:'Tokens', num:1, get:x=>fmtN(x.v) },
+    { label:'Tokens', num:1, get:x=>x.v==null?'—':fmtN(x.v) },
     { label:'Share', num:1, get:x=>x.p==null?'—':x.p.toFixed(3)+'%' },
   ], [
-    { k:'Listed vendors', v:r.listed_vendors ?? 0, p:null },
-    { k:'Tail vendors (aggregated)', v:r.tail_vendors ?? 0, p:null },
+    { k: r.listed_vendor_count != null ? `Listed vendors (top ${r.listed_vendor_count})` : 'Listed vendors', v:r.listed_vendors ?? null, p:null },
+    { k: r.tail_vendor_count != null ? `Tail vendors (${r.tail_vendor_count}, aggregated)` : 'Tail vendors (aggregated)', v:r.tail_vendors ?? null, p:null },
     { k:'"other" row from API', v:t.other_tokens, p:os },
     { k:'Denominator', v:t.denominator, p:vs+os },
     { k:'Excluded (unattributed)', v:t.unattributed_tokens, p:t.unattributed_pct_of_visible },
-  ]) + `<p class="src">Vendor shares plus the "other" row sum to <b>${(vs+os).toFixed(3)}%</b>. The residual is the API's own rounding of published values, not dropped data. Reconciliation asserted in code: <code>listed + tail + other == denominator</code> → <b>${r.sums_exactly ? 'holds' : 'FAILS'}</b>.</p>`;
+  ]) + `<p class="src">Vendor shares plus the "other" row sum to <b>${(vs+os).toFixed(3)}%</b>. The residual is rounding of each share to three decimals, not dropped data. Reconciliation asserted in code: <code>listed + tail + other == denominator</code> → <b>${r.sums_exactly === true ? 'holds' : r.sums_exactly === false ? 'FAILS' : 'not reported by this build of compute.py'}</b>.</p>` +
+    weeklyRecon();
+}
+
+/* Weekly buckets close the same way, checked again here from the numbers the
+   chart actually plots rather than trusting the flag alone. */
+function weeklyRecon() {
+  const ser = DATA.series;
+  if (!seriesOK(ser)) return '';
+  const names = Object.keys(ser.vendors).filter(v => !v.startsWith('_'));
+  const den = Array.isArray(ser.denominator) && ser.denominator.length === ser.weeks.length ? ser.denominator : null;
+  const dd = ser.days_dropped || {};
+  const tail = typeof dd.total === 'number'
+    ? ` ${dd.total} partial-week day${dd.total===1?'':'s'} excluded from the series; they remain in every fixed-window figure.` : '';
+  if (!den) return `<p class="src">Weekly series: this build of compute.py does not report a weekly denominator, so weekly closure is <b>not checked</b> here.${tail}</p>`;
+  let closing = 0;
+  ser.weeks.forEach((_, i) => {
+    const s = names.reduce((a,v)=>a+ser.vendors[v][i], 0) + ser.vendors._other[i];
+    if (s === den[i]) closing++;
+  });
+  return `<p class="src">Weekly series: <b>${closing} of ${ser.weeks.length}</b> complete weeks close exactly (<code>Σ vendors + other == weekly denominator</code>)` +
+    (closing === ser.weeks.length ? '' : ' — <b>FAILS</b>') + `.${tail}</p>`;
 }
 
 /* ── share over time ─────────────────────────────────────────────────────── */
-let trendChart, scatterChart, pairedChart, TF = { weeks: 13, measure: 'pct' }, WIN = null;
+// TF.weeks is set from series.weeks.length by setupWindowOptions().
+let trendChart, scatterChart, pairedChart, TF = { weeks: 0, measure: 'pct' }, WIN = null;
 
 /* Token-share panels, recomputed for whatever window is selected. */
 function renderTokenPanels() {
@@ -566,6 +655,9 @@ function renderTokenPanels() {
     { label:'Share of tokens (selected window)', data: vendors.map(v=>v.share_pct), color:'#58a6ff' },
     { label:`Share of estimated spend (${ts.window.days}d)`, data: vendors.map(v=>spendMap[v.key] ?? 0), color:'#d29922' },
   ]);
+  document.getElementById('paired-note').innerHTML = useWin
+    ? `<b>The two bars cover different periods.</b> Token share follows the selected window (${esc(WIN.start)} → ${esc(WIN.end)}); spend share stays on the fixed ${ts.window.days}-day window, because spend is computed per model and per-model weekly volumes are not stored. Compare the bars as shapes, not as a ratio — the scatter above is where the ratio is valid.`
+    : `Both bars cover the fixed ${ts.window.days}-day window (${esc(ts.window.start)} → ${esc(ts.window.end)}).`;
 
   const exTok = useWin ? WIN.excluded : ts.totals.unattributed_tokens;
   const exPct = useWin ? WIN.exclPct : ts.totals.unattributed_pct_of_visible;
@@ -582,23 +674,23 @@ function renderTokenPanels() {
 }
 
 function renderTrend() {
-  const s = DATA.series;
-  if (!s) return;
-  const n = Math.min(TF.weeks, s.weeks.length);
-  const weeks = s.weeks.slice(-n);
-  let names = Object.keys(s.vendors).filter(v => !v.startsWith('_'));
+  const ser = DATA.series;
+  if (!seriesOK(ser)) return;
+  const n = Math.min(TF.weeks, ser.weeks.length);
+  const weeks = ser.weeks.slice(-n);
+  let names = Object.keys(ser.vendors).filter(v => !v.startsWith('_'));
 
   // Rank by volume within the selected window, not overall — a 4-week view
-  // should show who is large now, not who was large in March.
+  // should show who is large now, not who was large at the start of the feed.
   const windowed = {};
-  for (const v of names) windowed[v] = s.vendors[v].slice(-n);
-  const ranked = names.sort((a,b) =>
+  for (const v of names) windowed[v] = ser.vendors[v].slice(-n);
+  const other = ser.vendors._other.slice(-n);
+  const ranked = [...names].sort((a,b) =>
     windowed[b].reduce((x,y)=>x+y,0) - windowed[a].reduce((x,y)=>x+y,0)).slice(0, 8);
 
   // Denominator includes the long tail but excludes unattributed traffic,
   // matching how every other share on this page is computed.
-  const totals = weeks.map((_, i) =>
-    names.reduce((a,v)=>a + windowed[v][i], 0) + (s.vendors._other || []).slice(-n)[i]);
+  const totals = weeks.map((_, i) => names.reduce((a,v)=>a + windowed[v][i], 0) + other[i]);
 
   const datasets = ranked.map((v, i) => ({
     label: v,
@@ -613,7 +705,7 @@ function renderTrend() {
     data: { labels: weeks, datasets },
     options: { responsive:true, maintainAspectRatio:false, interaction:{mode:'index',intersect:false},
       scales:{ x:{ ...AX, ticks:{color:'#8b949e', maxTicksLimit:10} },
-               y:{ ...AX, stacked: TF.measure === 'pct',
+               y:{ ...AX, stacked: TF.measure === 'pct', min: TF.measure === 'pct' ? 0 : undefined,
                    ticks:{ color:'#8b949e', callback: v => TF.measure==='pct' ? v+'%' : fmtN(v) },
                    title:{ display:true, color:'#8b949e',
                      text: TF.measure==='pct' ? 'share of routed tokens (%)' : 'tokens per week' } } },
@@ -621,8 +713,13 @@ function renderTrend() {
         tooltip:{ callbacks:{ label: c => `${c.dataset.label}: ${TF.measure==='pct' ? c.parsed.y.toFixed(2)+'%' : fmtN(c.parsed.y)}` } } } }
   });
 
+  const dd = ser.days_dropped || {};
+  const dropped = typeof dd.total === 'number'
+    ? `<br>Only complete weeks are plotted: ${dd.total} day${dd.total===1?'':'s'} of the ${DATA.token_share.window.days}-day feed fell in partial weeks and ${dd.total===1?'is':'are'} left out (${dd.leading ?? '?'} at the start, ${dd.trailing ?? '?'} at the end), so no bucket shows a false dip at the edges.`
+    : '';
   document.getElementById('trend-note').innerHTML =
-    `${weeks[0]} to ${weeks[weeks.length-1]} · weekly buckets · top 8 vendors by volume in this window.<br>${esc(s.note)}`;
+    `Weeks starting ${esc(weeks[0])} to ${esc(weeks[weeks.length-1])} (through ${esc(addDays(weeks[weeks.length-1], 6))}) · top 8 vendors by volume in this window · the remaining ${Math.max(0, names.length-8)} vendors and the "other" row stay in every week's denominator.` +
+    dropped;
 
   // movers: first vs last week share within the window
   const movers = ranked.map(v => {
@@ -642,21 +739,22 @@ function renderTrend() {
    classifications endpoint publishes a 7-day window only. Rather than leave that
    ambiguous, each panel states the window it actually covers. */
 function applyWindow() {
-  const s = DATA.series; if (!s) return;
-  const n = Math.min(TF.weeks, s.weeks.length);
-  const weeks = s.weeks.slice(-n);
+  const ser = DATA.series; if (!seriesOK(ser)) return;
+  const n = Math.min(TF.weeks, ser.weeks.length);
+  const weeks = ser.weeks.slice(-n);
+  const end = addDays(weeks[weeks.length-1], 6);     // labels are week starts
   document.getElementById('win-label').textContent =
-    `${weeks[0]} to ${weeks[weeks.length-1]} · ${n} weeks · applies to token share and trend`;
+    `${weeks[0]} to ${end} · ${n} complete weeks · applies to token share and trend`;
 
-  const names = Object.keys(s.vendors).filter(v => !v.startsWith('_'));
+  const names = Object.keys(ser.vendors).filter(v => !v.startsWith('_'));
   const tot = {};
-  names.forEach(v => tot[v] = s.vendors[v].slice(-n).reduce((a,b)=>a+b,0));
-  const other = (s.vendors._other || []).slice(-n).reduce((a,b)=>a+b,0);
-  const excl  = (s.vendors._unattributed || []).slice(-n).reduce((a,b)=>a+b,0);
+  names.forEach(v => tot[v] = ser.vendors[v].slice(-n).reduce((a,b)=>a+b,0));
+  const other = ser.vendors._other.slice(-n).reduce((a,b)=>a+b,0);
+  const excl  = ser.vendors._unattributed.slice(-n).reduce((a,b)=>a+b,0);
   const denom = Object.values(tot).reduce((a,b)=>a+b,0) + other;
 
   WIN = {
-    weeks: n, start: weeks[0], end: weeks[weeks.length-1], denom, excluded: excl,
+    weeks: n, start: weeks[0], end, denom, excluded: excl, other,
     vendors: Object.entries(tot).sort((a,b)=>b[1]-a[1])
       .map(([k,t]) => ({ key:k, tokens:t, share_pct:+(100*t/denom).toFixed(3) })),
     exclPct: +(100*excl/(denom+excl)).toFixed(2),

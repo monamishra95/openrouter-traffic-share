@@ -23,6 +23,7 @@ import json
 import re
 import sys
 from collections import defaultdict
+from datetime import date, timedelta
 from pathlib import Path
 
 DATA = Path(__file__).resolve().parent.parent / "data"
@@ -71,6 +72,11 @@ def vendor_of(permaslug: str) -> str:
     return permaslug.split("/", 1)[0] if "/" in permaslug else permaslug
 
 
+# The page draws the top 12 vendors individually (index.html slices by_vendor to
+# 12). Everything below that is the reconciliation's "tail" row.
+LISTED_VENDORS = 12
+
+
 # ── token share ──────────────────────────────────────────────────────────────
 
 def token_shares(tokens_doc):
@@ -103,6 +109,17 @@ def token_shares(tokens_doc):
     attributed = sum(by_model.values())
     denominator = attributed + other      # shares are over attributed + long tail
     total_incl_unattributed = denominator + unattributed
+    vendors_ranked = ranked(by_vendor, denominator)
+
+    # The page's Reconciliation panel has always read these names, but nothing
+    # emitted them, so it showed "Listed vendors 0" and "FAILS" against a dataset
+    # that closes exactly. Listed = the vendors the charts draw individually;
+    # tail = every remaining vendor, aggregated rather than dropped.
+    listed = sum(v["tokens"] for v in vendors_ranked[:LISTED_VENDORS])
+    tail = sum(v["tokens"] for v in vendors_ranked[LISTED_VENDORS:])
+    sums_exactly = listed + tail + other == denominator
+    if not sums_exactly:
+        raise ReconciliationError(f"90-day: {listed} + {tail} + {other} != {denominator}")
 
     return {
         "window": {"days": len(dates), "start": min(dates) if dates else None,
@@ -115,7 +132,14 @@ def token_shares(tokens_doc):
             "total_including_unattributed": total_incl_unattributed,
             "unattributed_pct_of_visible": pct(unattributed, total_incl_unattributed),
         },
-        "by_vendor": ranked(by_vendor, denominator),
+        "reconciliation": {
+            "listed_vendors": listed,
+            "tail_vendors": tail,
+            "listed_vendor_count": min(LISTED_VENDORS, len(vendors_ranked)),
+            "tail_vendor_count": max(0, len(vendors_ranked) - LISTED_VENDORS),
+            "sums_exactly": sums_exactly,
+        },
+        "by_vendor": vendors_ranked,
         "by_model": ranked(by_model, denominator)[:50],
         "exclusion_rule": (
             "Models published under an anonymous or stealth provider are excluded from all "
@@ -134,6 +158,110 @@ def ranked(counter: dict, denominator: int):
         {"key": k, "tokens": v, "share_pct": pct(v, denominator)}
         for k, v in sorted(counter.items(), key=lambda kv: -kv[1])
     ]
+
+
+class ReconciliationError(RuntimeError):
+    """Raised when shares would not close to 100% — something is being dropped."""
+
+
+# ── weekly series ────────────────────────────────────────────────────────────
+
+def weekly_series(tokens_doc):
+    """Bucket the same daily rows into complete Sunday-start UTC weeks, per vendor.
+
+    Uses the same rules as token_shares: vendor_of() for the vendor, is_unattributed()
+    for exclusion, and the API's 'other' row kept in the denominator but never
+    attributed. Anything else would let the trend lines disagree with the headline.
+
+    Only complete 7-day weeks are emitted. A rolling window almost never starts on
+    a Sunday and ends on a Saturday, and a 3-day bucket plotted beside 7-day ones
+    reads as a collapse in demand at both edges of every line. Days dropped are
+    counted and published so the page can say so.
+    """
+    rows = tokens_doc["raw"]["data"]
+    dates = sorted({r["date"] for r in rows})
+    if not dates:
+        return None
+
+    first, last = date.fromisoformat(dates[0]), date.fromisoformat(dates[-1])
+    # Python weekday(): Monday=0 .. Sunday=6. Days forward to the first Sunday,
+    # and days back from the last date to the most recent Saturday.
+    first_sunday = first + timedelta(days=(6 - first.weekday()) % 7)
+    last_saturday = last - timedelta(days=(last.weekday() - 5) % 7)
+    n_weeks = max(0, ((last_saturday - first_sunday).days + 1) // 7)
+    if n_weeks == 0:
+        return None
+    week_starts = [first_sunday + timedelta(days=7 * i) for i in range(n_weeks)]
+    covered_end = week_starts[-1] + timedelta(days=6)
+
+    # A missing day inside a "complete" week would make it a 6-day bucket again.
+    present = set(dates)
+    gaps = [d.isoformat() for d in (first_sunday + timedelta(days=i)
+                                    for i in range(7 * n_weeks))
+            if d.isoformat() not in present]
+    if gaps:
+        raise ReconciliationError(f"weekly series: dates missing inside complete weeks: {gaps}")
+
+    vendors = defaultdict(lambda: [0] * n_weeks)
+    other = [0] * n_weeks
+    unattributed = [0] * n_weeks
+    denominator = [0] * n_weeks          # accumulated independently, then checked
+
+    for r in rows:
+        d = date.fromisoformat(r["date"])
+        if d < first_sunday or d > covered_end:
+            continue
+        i = (d - first_sunday).days // 7
+        slug = r["model_permaslug"]
+        n = int(r["total_tokens"])
+        if slug == "other":
+            other[i] += n
+            denominator[i] += n
+            continue
+        if is_unattributed(slug):
+            unattributed[i] += n
+            continue
+        vendors[vendor_of(slug)][i] += n
+        denominator[i] += n
+
+    # Weekly reconciliation, same identity as the 90-day one: listed + other ==
+    # denominator, in every bucket. The denominator is summed row by row above,
+    # not derived from the vendor totals, so this checks something.
+    for i in range(n_weeks):
+        s = sum(v[i] for v in vendors.values()) + other[i]
+        if s != denominator[i]:
+            raise ReconciliationError(
+                f"week {week_starts[i]}: vendors + other = {s} != denominator {denominator[i]}")
+
+    order = sorted(vendors, key=lambda k: -sum(vendors[k]))
+    out_vendors = {k: vendors[k] for k in order}
+    # Underscore keys are the non-vendor buckets; the page filters them out of
+    # the vendor list but keeps them in the arithmetic.
+    out_vendors["_other"] = other
+    out_vendors["_unattributed"] = unattributed
+
+    leading = (first_sunday - first).days
+    trailing = (last - covered_end).days
+    return {
+        "granularity": "week",
+        "week_start": "sunday",
+        "timezone": "UTC",
+        "weeks": [w.isoformat() for w in week_starts],
+        "vendors": out_vendors,
+        "denominator": denominator,
+        "covered": {"start": first_sunday.isoformat(), "end": covered_end.isoformat(),
+                    "days": 7 * n_weeks},
+        "days_dropped": {"leading": leading, "trailing": trailing,
+                         "total": leading + trailing},
+        "reconciliation": {"weeks_checked": n_weeks, "sums_exactly": True},
+        "note": (
+            "Weekly vendor lines describe share of the daily top-50 attributed traffic plus "
+            "the API's aggregate 'other' row, whose vendor mix is not published. When a "
+            "vendor's model drops out of the daily top 50, its tokens move into 'other' and "
+            "the vendor's line falls for reasons unrelated to demand — short-run movement "
+            "can reflect ranking churn rather than usage."
+        ),
+    }
 
 
 # ── open-weight classification ───────────────────────────────────────────────
@@ -354,6 +482,12 @@ KNOWN_UNKNOWNS = [
     {"question": "Whether token counts are comparable between vendors",
      "why": "They are not. Each provider's own tokenizer produces the counts, so summing across "
             "vendors adds unlike units. Request share is offered as the more comparable measure."},
+    {"question": "Week-to-week vendor demand",
+     "why": "The daily feed lists the top 50 models and folds everything else into one 'other' "
+            "row whose vendor mix is not published. Weekly vendor lines therefore describe share "
+            "of top-50 attributed traffic: when a vendor's model falls out of the daily top 50 "
+            "its line drops for reasons unrelated to demand. Short-run movement can reflect "
+            "ranking churn rather than usage."},
 ]
 
 
@@ -374,6 +508,7 @@ def build(print_summary=False):
             "tasks.json": (tasks_doc or {}).get("_provenance"),
         },
         "token_share": shares,
+        "series": weekly_series(tokens_doc),
         "open_weight": open_weight_share(shares, licences_doc, registry_doc) if licences_doc else None,
         "estimated_spend": estimated_spend(shares, registry_doc) if registry_doc else None,
         "task_segmentation": task_segmentation(tasks_doc),
@@ -388,6 +523,12 @@ def build(print_summary=False):
               f"({shares['window']['days']} days)")
         print(f"unattributed excluded: {t['unattributed_tokens']:,} tokens "
               f"({t['unattributed_pct_of_visible']}% of visible traffic)")
+        s = out["series"]
+        if s:
+            print(f"weekly series: {len(s['weeks'])} complete weeks "
+                  f"{s['covered']['start']} .. {s['covered']['end']}, "
+                  f"{s['days_dropped']['total']} partial-week days dropped "
+                  f"({s['days_dropped']['leading']} leading, {s['days_dropped']['trailing']} trailing)")
         print("\ntop vendors by token share:")
         for v in shares["by_vendor"][:10]:
             print(f"  {v['key']:<20} {v['share_pct']:6.2f}%  {v['tokens']:>18,}")
