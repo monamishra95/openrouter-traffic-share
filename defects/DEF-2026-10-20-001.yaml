@@ -1,0 +1,50 @@
+id: DEF-2026-10-20-001
+project: openrouter-traffic-share
+class: C3            # integration: consumer shipped without a producer
+severity: SEV1       # escaped (S4) -> SEV1 per PROTOCOL §1.3
+stage_detected: S4
+stage_should_have: S0-builder
+owner_agent: builder
+model: unknown       # introducing model not recorded in the commit history
+description: >
+  index.html read DATA.series in three places (window selector, Share over
+  time tab, windowed token-share panels), but scripts/compute.py never emitted
+  a `series` key and data/computed.json never contained one. The selector
+  changed nothing, the trend tab drew an empty canvas, and captions described
+  windowed recomputation that never happened. The selector also offered 26
+  weeks against 12.9 weeks of stored history. Live on the deployed page.
+evidence: >
+  computed.json at 41be462 has keys generated_from, token_share, open_weight,
+  estimated_spend, task_segmentation, known_unknowns — no `series`. Fixed in
+  74188e9.
+root_cause: >
+  The page and compute.py were extended separately, and nothing asserted that
+  every field the page reads is one the pipeline emits. The guard added for
+  DEF-2026-09-21-001 covered only task_segmentation.top_models, so the same
+  producer/consumer seam stayed open for every other key.
+lesson_file:         # written by Librarian
+regression_artifact: >
+  tests/test_compute.py::test_page_reads_only_series_fields_the_producer_emits,
+  ::test_committed_output_carries_a_usable_series, plus
+  ::test_weekly_drops_partial_weeks_at_both_ends,
+  ::test_weekly_shares_close_to_100_in_every_week,
+  ::test_weekly_excludes_unattributed_on_the_aggregate_rule,
+  ::test_weekly_series_uses_the_same_rules_as_the_headline
+promotion: hard-rule # recurrence -> promotion ladder; Librarian to confirm
+recurrence_of: DEF-2026-09-21-001
+model_specific: false
+status: open
+
+# Postmortem (PROTOCOL §1.8, required for S4)
+# 1. What happened? The trend view and window selector shipped reading a field
+#    the pipeline never produced; the page rendered without them, silently.
+# 2. Earliest realistic catch point? S0 — Builder self-check when the trend
+#    tab was added.
+# 3. Why did that gate miss it? Tests exercised compute.py against itself; the
+#    page was not checked against the emitted schema except for one key.
+# 4. What rule or gate changed? Every key index.html reads from `series` must
+#    be emitted by compute.weekly_series(); the trend view is gated on
+#    seriesOK(), not truthiness.
+# 5. What artifact now makes recurrence impossible? The two seam tests named
+#    in regression_artifact. Note they cover `series` only — a page-wide
+#    schema check would close the seam for every key (see -002).
