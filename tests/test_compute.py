@@ -673,6 +673,31 @@ def test_spend_price_coverage():
     assert c["pct_of_attributed"] == c["pct_of_top_models"]
 
 
+def test_parity_ratio_is_spend_share_over_token_share():
+    """P2 task 3. anthropic: spend 0.004 of 0.0047 over tokens 200 of 1200
+    = 0.851064 / 0.166667 = 5.10638; deepseek: 0.0001/0.0047 over 500/1200."""
+    def run(compute):
+        s = compute.token_shares(TOKENS_DOC)
+        sp = compute.estimated_spend(s, REGISTRY_DOC)
+        r = {v["vendor"]: v for v in sp["by_vendor"]}
+        assert abs(r["anthropic"]["parity_ratio"] - 5.106383) < 1e-6, r["anthropic"]
+        assert abs(r["deepseek"]["parity_ratio"] - 0.051064) < 1e-6, r["deepseek"]
+        assert abs(r["anthropic"]["token_share_pct"] - 16.667) < 0.001
+        # same quantity the scatter plots: y / x on the rounded shares, to rounding
+        a = r["anthropic"]
+        assert abs(a["share_pct"] / a["token_share_pct"] - a["parity_ratio"]) < 1e-3
+        json.dumps(sp, allow_nan=False)
+    with_fixture(run)
+
+
+def test_parity_ratio_none_without_tokens():
+    import compute
+    s = {"by_vendor": [], "totals": {"denominator": 0, "attributed_tokens": 0}, "by_model": [
+        {"key": "anthropic/claude-x", "tokens": 0, "share_pct": 0.0}]}
+    sp = compute.estimated_spend(s, REGISTRY_DOC)
+    assert all(v["parity_ratio"] is None for v in sp["by_vendor"]), sp["by_vendor"]
+
+
 def test_page_prose_carries_no_hardcoded_figures():
     """Figures in the page's prose drift from the data on every refresh (the
     task paragraph claimed 27% / 72.5% while the data said 22.4% / 63.1%).
@@ -692,6 +717,26 @@ def test_page_prose_carries_no_hardcoded_figures():
     dates = [d for d in re.findall(r"(?<!DEF-)\b20\d\d-\d\d-\d\d\b", prose)]
     assert not dates, f"hardcoded dates in page prose: {dates}"
     assert not re.search(r"\b\d+-day\b", prose), "hardcoded window length in page prose"
+
+
+def test_page_p2_seams():
+    """Ratio read through parityOf (never a bare y/x), sort keeps aggregate
+    rows last, filters built only from vendor and licence — no pricing tier."""
+    import re
+    html = _index_html_text()
+    assert "parityOf(" in html and "parity_ratio" in html
+    assert "c.raw.y/c.raw.x" not in html, "scatter tooltip divides rounded shares again"
+    assert "classList.contains('agg')" in html, "sort must keep aggregate rows out of the sort"
+    for hid in ("t-models", "t-open"):
+        assert f"filterableTable('{hid}'" in html, hid
+    dims = set(re.findall(r"pills\('(\w+)'", html))
+    assert dims == {"vendor", "licence"}, f"filter dimensions must come from model fields only: {dims}"
+    # the page's vendorOf must be compute.vendor_of's rule
+    import compute
+    for k in ("deepseek/deepseek-v4-flash-20260731", "openai/gpt-oss-120b:free", "other"):
+        js = k.split("/")[0] if "/" in k else k
+        assert compute.vendor_of(k) == js, k
+    assert "const vendorOf = k => k.includes('/') ? k.split('/')[0] : k;" in html
 
 
 def test_every_chart_has_an_exportable_table():

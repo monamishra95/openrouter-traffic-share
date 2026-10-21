@@ -82,6 +82,15 @@
   .tdata tfoot td,.tdata tfoot th{border-top:1px solid var(--line);border-bottom:0;font-weight:600;color:var(--txt);text-align:left}
   .tdata tfoot td.num{text-align:right}
   .tdata tr.agg th,.tdata tr.agg td{color:var(--dim);font-style:italic}
+  .tdata thead th{cursor:pointer;user-select:none;white-space:normal}
+  .tdata thead th:hover{color:var(--txt)}
+  .tdata thead th[aria-sort="ascending"]::after{content:" ▲";font-size:.7em}
+  .tdata thead th[aria-sort="descending"]::after{content:" ▼";font-size:.7em}
+  .fpills{display:flex;flex-wrap:wrap;gap:.3rem;align-items:center;margin:0 0 .5rem;font-size:.78rem;color:var(--dim)}
+  .fpills b{font-weight:600;margin-right:.2rem;min-width:4.2rem}
+  .fp{background:var(--panel);border:1px solid var(--line);color:var(--dim);padding:.18rem .6rem;border-radius:99px;cursor:pointer;font-size:.75rem;font-weight:400}
+  .fp:hover{color:var(--txt)}
+  .fp.on{background:#1f6feb22;border-color:var(--accent);color:var(--txt)}
   .cp{background:var(--panel);border:1px solid var(--line);color:var(--dim);padding:.25rem .65rem;border-radius:5px;cursor:pointer;font-size:.76rem;font-weight:400}
   .cp:hover{border-color:var(--accent);color:var(--txt)}
   .cpmsg{font-size:.74rem;color:var(--good)}
@@ -319,6 +328,7 @@ function exportTable(chartId, spec) {
       <tbody>${spec.rows.map(r => tr(r)).join('')}${(spec.agg || []).map(r => tr(r, 'agg')).join('')}</tbody>
       ${spec.foot && spec.foot.length ? `<tfoot>${spec.foot.map(r => tr(r)).join('')}</tfoot>` : ''}
     </table></div></details>`;
+  applySort(host.querySelector('table'));
 }
 
 function tableCells(table) {
@@ -363,7 +373,7 @@ document.addEventListener('click', async e => {
    remaining vendors aggregated, the API's "other" row, and the total. Token
    shares close over (attributed + other); spend shares close over priced
    traffic, so the "other" row has no spend share. */
-function vendorShareTable(chartId, caption, tokHdr, spendHdr, allVendors, listedKeys, spendMap, otherPct, otherTokens, denomTokens) {
+function vendorShareTable(chartId, caption, tokHdr, spendHdr, allVendors, listedKeys, spendMap, otherPct, otherTokens, denomTokens, parityHdr) {
   const byKey = Object.fromEntries(allVendors.map(v => [v.key, v]));
   const listed = listedKeys.map(k => byKey[k]).filter(Boolean);
   const rest = allVendors.filter(v => !listedKeys.includes(v.key));
@@ -371,17 +381,110 @@ function vendorShareTable(chartId, caption, tokHdr, spendHdr, allVendors, listed
   const restSpend = rest.reduce((a, v) => a + (sp(v.key) ?? 0), 0);
   const tokSum = listed.concat(rest).reduce((a, v) => a + v.share_pct, 0) + otherPct;
   const spendSum = listed.concat(rest).reduce((a, v) => a + (sp(v.key) ?? 0), 0);
+  // Parity is always the fixed-window ratio (parityOf), even where the token
+  // column is windowed — a ratio across two periods would mean nothing.
+  const restParity = (() => {
+    const fx = DATA.token_share.by_vendor.filter(v => !listedKeys.includes(v.key));
+    const t = fx.reduce((a, v) => a + v.share_pct, 0), s = fx.reduce((a, v) => a + (sp(v.key) ?? 0), 0);
+    return t > 0 ? s / t : null;
+  })();
   exportTable(chartId, {
     caption,
-    cols: [{label:'Vendor'}, {label:tokHdr, num:1}, {label:spendHdr, num:1}, {label:'Tokens', num:1}],
-    rows: listed.map(v => [v.key, f3(v.share_pct), f3(sp(v.key)), int(v.tokens)]),
+    cols: [{label:'Vendor'}, {label:tokHdr, num:1}, {label:spendHdr, num:1}, {label:parityHdr, num:1}, {label:'Tokens', num:1}],
+    rows: listed.map(v => [v.key, f3(v.share_pct), f3(sp(v.key)), f2(parityOf(v.key)), int(v.tokens)]),
     agg: [
-      ...(rest.length ? [[`Remaining ${rest.length} vendor${rest.length===1?'':'s'} (aggregated)`, f3(rest.reduce((a,v)=>a+v.share_pct,0)), f3(restSpend), int(rest.reduce((a,v)=>a+v.tokens,0))]] : []),
-      ['"other" row (outside daily top 50; no vendor, no price)', f3(otherPct), '—', int(otherTokens)],
+      ...(rest.length ? [[`Remaining ${rest.length} vendor${rest.length===1?'':'s'} (aggregated)`, f3(rest.reduce((a,v)=>a+v.share_pct,0)), f3(restSpend), f2(restParity), int(rest.reduce((a,v)=>a+v.tokens,0))]] : []),
+      ['"other" row (outside daily top 50; no vendor, no price)', f3(otherPct), '—', '—', int(otherTokens)],
     ],
-    foot: [['Total', f3(tokSum), f3(spendSum), int(denomTokens)]],
+    foot: [['Total', f3(tokSum), f3(spendSum), '—', int(denomTokens)]],
   });
 }
+
+/* Same rule as compute.py vendor_of(): the permaslug prefix before the first "/". */
+const vendorOf = k => k.includes('/') ? k.split('/')[0] : k;
+
+/* Filter pills built only from fields the model records carry: vendor (the key
+   prefix) and licence class (open_weight classification). No pricing tier —
+   the data has none. Vendor and licence filters combine (AND). The count line
+   says how much of routed traffic the visible rows cover, so a filtered table
+   is never mistaken for the whole. */
+const FILTERS = {};
+const LICENCE_ORDER = ['open', 'open-restricted', 'proprietary', 'unknown'];
+function filterableTable(hostId, items, cols, opt) {
+  const host = document.getElementById(hostId); if (!host) return;
+  const st = FILTERS[hostId] || (FILTERS[hostId] = { vendor: 'all', licence: 'all' });
+  const vendors = [...new Set(items.map(opt.vendor))];          // items arrive ranked by tokens
+  const licences = opt.licence
+    ? [...new Set(items.map(opt.licence).filter(Boolean))].sort((a,b) => LICENCE_ORDER.indexOf(a) - LICENCE_ORDER.indexOf(b))
+    : [];
+  if (st.vendor !== 'all' && !vendors.includes(st.vendor)) st.vendor = 'all';
+  if (st.licence !== 'all' && !licences.includes(st.licence)) st.licence = 'all';
+  const shown = items.filter(r => (st.vendor === 'all' || opt.vendor(r) === st.vendor) &&
+                                  (st.licence === 'all' || !opt.licence || opt.licence(r) === st.licence));
+  const pills = (dim, values) => `<div class="fpills" role="group" aria-label="Filter by ${dim}"><b>${dim === 'vendor' ? 'Vendor' : 'Licence'}</b>` +
+    ['all', ...values].map(v => `<button type="button" class="fp${st[dim]===v?' on':''}" data-host="${hostId}" data-dim="${dim}" data-val="${esc(v)}" aria-pressed="${st[dim]===v}">${v==='all'?'All':esc(v)}</button>`).join('') + '</div>';
+  const share = shown.reduce((a, r) => a + opt.share(r), 0);
+  host.innerHTML = (opt.note || '') + pills('vendor', vendors) + (licences.length ? pills('licence', licences) : '') +
+    `<p class="src" style="margin:.2rem 0 .5rem">Showing ${shown.length} of ${items.length} listed models · ${share.toFixed(2)}% of routed tokens` +
+    (shown.length === items.length ? '' : ` (the ${items.length} listed models carry ${items.reduce((a,r)=>a+opt.share(r),0).toFixed(2)}%)`) + `.</p>` +
+    (shown.length ? table(cols, shown) : `<div class="empty" style="padding:1rem">No listed model matches both filters.</div>`);
+  opt.rerender = () => filterableTable(hostId, items, cols, opt);
+  host._rerender = opt.rerender;
+}
+document.addEventListener('click', e => {
+  const b = e.target.closest('.fp'); if (!b) return;
+  FILTERS[b.dataset.host][b.dataset.dim] = b.dataset.val;
+  const host = document.getElementById(b.dataset.host);
+  if (host && host._rerender) host._rerender();
+});
+
+/* Spend share ÷ token share for a vendor, both over the fixed window. Read from
+   compute.py when present; otherwise the same ratio from the two published
+   shares, which differs only by their 3-dp rounding. */
+function parityOf(key) {
+  const sp = DATA.estimated_spend; if (!sp) return null;
+  const s = sp.by_vendor.find(v => v.vendor === key); if (!s) return null;
+  if (typeof s.parity_ratio === 'number' && isFinite(s.parity_ratio)) return s.parity_ratio;
+  const t = DATA.token_share.by_vendor.find(v => v.key === key);
+  return t && t.share_pct > 0 ? s.share_pct / t.share_pct : null;
+}
+
+/* Click a column header to sort a data table; click again to reverse. Only the
+   per-item rows move — aggregate rows and the total stay last, so the closure
+   stays visible. The choice survives re-renders (e.g. a window change), and
+   the copy buttons serialise whatever order is on screen. */
+const SORT = {};
+function applySort(table) {
+  const st = SORT[table.dataset.chart]; if (!st) return;
+  const body = table.tBodies[0];
+  const rows = [...body.rows].filter(r => !r.classList.contains('agg'));
+  const agg = [...body.rows].filter(r => r.classList.contains('agg'));
+  const val = r => {
+    const t = r.cells[st.col].textContent.trim(), n = parseFloat(t.replace(/[^0-9.\-]/g, ''));
+    return t === '—' || isNaN(n) ? null : n;
+  };
+  const numeric = st.col !== 0 && rows.some(r => val(r) !== null);   // first column: labels / dates
+  rows.sort((a, b) => {
+    if (numeric) {
+      const x = val(a), y = val(b);
+      if (x === null) return 1; if (y === null) return -1;   // dashes always last
+      return st.dir * (x - y);
+    }
+    return st.dir * a.cells[st.col].textContent.localeCompare(b.cells[st.col].textContent);
+  });
+  rows.concat(agg).forEach(r => body.appendChild(r));
+  [...table.tHead.rows[0].cells].forEach((th, i) =>
+    th.setAttribute('aria-sort', i === st.col ? (st.dir > 0 ? 'ascending' : 'descending') : 'none'));
+}
+document.addEventListener('click', e => {
+  const th = e.target.closest('.tdata thead th'); if (!th) return;
+  const table = th.closest('table'), col = th.cellIndex, id = table.dataset.chart;
+  const prev = SORT[id];
+  // numbers default to largest-first, text to A→Z
+  const firstDir = col === 0 ? 1 : -1;
+  SORT[id] = { col, dir: prev && prev.col === col ? -prev.dir : firstDir };
+  applySort(table);
+});
 
 function provenance(p) {
   if (!p) return '';
@@ -430,7 +533,7 @@ function scatter(id, points) {
                y:{ ...AX, title:{display:true,text:'share of estimated spend (%)',color:'#8b949e'}, min:0, max } },
       plugins:{ legend:{ labels:{color:'#e6edf3', boxWidth:12, filter:i=>i.text!=='vendor'} },
         tooltip:{ callbacks:{ label: c => c.raw.v
-          ? `${c.raw.v}: ${c.raw.x.toFixed(2)}% tokens, ${c.raw.y.toFixed(2)}% spend (${(c.raw.y/c.raw.x).toFixed(1)}x)`
+          ? `${c.raw.v}: ${c.raw.x.toFixed(2)}% tokens, ${c.raw.y.toFixed(2)}% spend (${fmtRatio(c.raw.r)})`
           : '' } } } }
   });
 }
@@ -580,15 +683,21 @@ function render() {
     });
     document.getElementById('open-method').innerHTML =
       `<h2 style="font-size:.95rem">Method</h2><p class="src" style="margin-top:0">${esc(ow.method)}</p>`;
-    document.getElementById('t-open').innerHTML = table([
+    const owDen = d.token_share.totals.denominator;
+    filterableTable('t-open', ow.models.slice(0, 30), [
       {label:'Model', get:r=>esc(r.model)},
+      {label:'Vendor', get:r=>esc(vendorOf(r.model))},
       {label:'Classification', get:r=>esc(r.classification)},
       {label:'Evidence', get:r=>{
         const e=r.evidence||{};
         return e.source ? `<a href="${esc(e.source)}" target="_blank">${esc(e.license||'licence')}</a>` : esc(e.note||'—');
       }},
       {label:'Tokens', num:1, get:r=>fmtN(r.tokens)},
-    ], ow.models.slice(0, 30));
+    ], {
+      vendor: r => vendorOf(r.model),
+      licence: r => r.classification,
+      share: r => owDen ? 100 * r.tokens / owDen : 0,
+    });
   }
 
   renderMethod();
@@ -668,10 +777,14 @@ const FORMULAS = [
     f: 'vendor estimated USD ÷ total estimated USD',
     src: 'derived',
     note: 'Relative shape is the load-bearing part; the absolute dollar figure uses list prices and is indicative only.' },
-  { fig: 'Value-to-volume ratio (scatter)',
-    f: 'spend share ÷ token share',
+  { fig: 'Parity ratio (value-to-volume)',
+    f: 'vendor spend share ÷ vendor token share, both over the fixed window',
+    src: 'derived (compute.py estimated_spend.by_vendor[].parity_ratio)',
+    note: 'Above 1.0 = captures more value than volume; the parity diagonal on the scatter. Shown and sortable in the tables under the scatter and the paired bars. In the paired table the token column may follow the selected window, but the ratio always uses the fixed-window token share — dividing a windowed share by a fixed one would compare two periods. Computed from unrounded quantities.' },
+  { fig: 'Filtered share (model tables)',
+    f: 'Σ share of the listed models matching the vendor and licence filters',
     src: 'derived',
-    note: 'Above 1.0 = captures more value than volume. This is the parity diagonal on the scatter.' },
+    note: 'Vendor = the model key\'s prefix (same rule as compute.py); licence = open-weight classification. Filters apply to the listed top models only, and the line above each table states what fraction of routed tokens the visible rows cover.' },
   { fig: 'Open-weight share',
     f: 'Σ tokens of models in that licence class ÷ denominator',
     src: 'rankings-daily × HuggingFace × vendor policy',
@@ -832,15 +945,15 @@ function renderTokenPanels() {
   // would silently mix two periods in one chart and make the ratio meaningless.
   const scatterVendors = ts.by_vendor.slice(0, 12);
   const pts = scatterVendors.filter(v => spendMap[v.key] != null)
-    .map(v => ({ x: v.share_pct, y: spendMap[v.key], tokens: v.tokens, v: v.key }));
+    .map(v => ({ x: v.share_pct, y: spendMap[v.key], tokens: v.tokens, v: v.key, r: parityOf(v.key) }));
   if (scatterChart) scatterChart.destroy();
   scatterChart = scatter('c-scatter', pts);
 
-  const above = pts.filter(p => p.y > p.x).sort((a,b)=>(b.y/b.x)-(a.y/a.x));
-  const below = pts.filter(p => p.y < p.x).sort((a,b)=>(a.y/a.x)-(b.y/b.x));
+  const above = pts.filter(p => p.r > 1).sort((a,b)=>b.r-a.r);
+  const below = pts.filter(p => p.r != null && p.r < 1).sort((a,b)=>a.r-b.r);
   document.getElementById('scatter-note').innerHTML =
-    (above[0] ? `<b>${esc(above[0].v)}</b> captures ${(above[0].y/above[0].x).toFixed(1)}× its share of volume in value — ${above[0].x.toFixed(1)}% of tokens, ${above[0].y.toFixed(1)}% of spend. ` : '') +
-    (below[0] ? `<b>${esc(below[0].v)}</b> is the mirror image at ${(below[0].y/below[0].x).toFixed(2)}× — ${below[0].x.toFixed(1)}% of tokens, ${below[0].y.toFixed(1)}% of spend. ` : '') +
+    (above[0] ? `<b>${esc(above[0].v)}</b> captures ${fmtRatio(above[0].r)} its share of volume in value — ${above[0].x.toFixed(1)}% of tokens, ${above[0].y.toFixed(1)}% of spend. ` : '') +
+    (below[0] ? `<b>${esc(below[0].v)}</b> is the mirror image at ${fmtRatio(below[0].r)} — ${below[0].x.toFixed(1)}% of tokens, ${below[0].y.toFixed(1)}% of spend. ` : '') +
     `<br><b>Both axes cover the same fixed window: ${ts.window.start} → ${ts.window.end} (${ts.window.days} days).</b> ` +
     `This chart deliberately does not follow the time selector — spend cannot be recomputed per week from the stored data, and plotting a windowed token share against a fixed spend share would compare two different periods. The selector drives the paired bars and the trend tab below.`;
 
@@ -850,7 +963,8 @@ function renderTokenPanels() {
     `Volume versus value — plotted points, fixed window ${fixedLbl}. Vendors without a published price are not plotted and fall into the remaining row.`,
     `Token share (%) · ${fixedLbl}`, `Spend share (%) · ${fixedLbl}`,
     ts.by_vendor, pts.map(p => p.v), spendMap,
-    100 * tt.other_tokens / tt.denominator, tt.other_tokens, tt.denominator);
+    100 * tt.other_tokens / tt.denominator, tt.other_tokens, tt.denominator,
+    `Spend ÷ token (×) · ${fixedLbl}`);
 
   if (pairedChart) pairedChart.destroy();
   pairedChart = hbar('c-paired', vendors.map(v=>v.key), [
@@ -862,13 +976,14 @@ function renderTokenPanels() {
   const tokLbl = useWin ? `${WIN.start} → ${WIN.end}` : fixedLbl;
   vendorShareTable('c-paired',
     useWin
-      ? `Token share and spend share — token share for the selected window ${tokLbl}; spend share fixed at ${fixedLbl} (per-model weekly volumes are not stored). "—" = no published price.`
+      ? `Token share and spend share — token share for the selected window ${tokLbl}; spend share fixed at ${fixedLbl} (per-model weekly volumes are not stored). The spend ÷ token ratio uses the fixed-window token share, never the windowed one, so it never divides across two periods. "—" = no published price.`
       : `Token share and spend share — both for the fixed window ${fixedLbl}. "—" = no published price.`,
     `Token share (%) · ${tokLbl}`, `Spend share (%) · ${fixedLbl}`,
     useWin ? WIN.vendors : ts.by_vendor, vendors.map(v => v.key), spendMap,
     useWin ? 100 * WIN.other / WIN.denom : 100 * tt.other_tokens / tt.denominator,
     useWin ? WIN.other : tt.other_tokens,
-    useWin ? WIN.denom : tt.denominator);
+    useWin ? WIN.denom : tt.denominator,
+    `Spend ÷ token (×) · ${fixedLbl}`);
   document.getElementById('paired-note').innerHTML = useWin
     ? `<b>The two bars cover different periods.</b> Token share follows the selected window (${esc(WIN.start)} → ${esc(WIN.end)}); spend share stays on the fixed ${ts.window.days}-day window, because spend is computed per model and per-model weekly volumes are not stored. Compare the bars as shapes, not as a ratio — the scatter above is where the ratio is valid.`
     : `Both bars cover the fixed ${ts.window.days}-day window (${esc(ts.window.start)} → ${esc(ts.window.end)}).`;
@@ -878,13 +993,23 @@ function renderTokenPanels() {
   document.getElementById('excl').innerHTML =
     `<b style="color:#d29922">Excluded from these shares:</b> ${fmtN(exTok)} tokens from anonymous or stealth providers — <b>${exPct}% of visible traffic</b> in this window. ${esc(ts.exclusion_rule)}`;
   document.getElementById('src-tokens').innerHTML = provenance(d.generated_from['tokens-daily.json']);
-  document.getElementById('t-models').innerHTML =
-    `<p class="src" style="margin-top:0">Model-level detail covers the full ${ts.window.days}-day window; the weekly series is stored per vendor, not per model.</p>` +
-    table([
+  // Licence class joined from open_weight.models (same top-model list); the
+  // licence pills are omitted if that block is absent.
+  const lic = {};
+  if (d.open_weight && Array.isArray(d.open_weight.models)) for (const m of d.open_weight.models) lic[m.model] = m.classification;
+  const hasLic = Object.keys(lic).length > 0;
+  filterableTable('t-models', ts.by_model.slice(0, 25), [
       {label:'Model', get:r=>esc(r.key)},
+      {label:'Vendor', get:r=>esc(vendorOf(r.key))},
+      ...(hasLic ? [{label:'Licence', get:r=>esc(lic[r.key] || '—')}] : []),
       {label:'Tokens', num:1, get:r=>fmtN(r.tokens)},
       {label:'Share', num:1, get:r=>r.share_pct.toFixed(2)+'%'},
-    ], ts.by_model.slice(0, 25));
+    ], {
+      vendor: r => vendorOf(r.key),
+      licence: hasLic ? r => lic[r.key] : null,
+      share: r => r.share_pct,
+      note: `<p class="src" style="margin-top:0">Model-level detail covers the full ${ts.window.days}-day window; the weekly series is stored per vendor, not per model.</p>`,
+    });
 }
 
 function renderTrend() {

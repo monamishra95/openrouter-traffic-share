@@ -386,11 +386,25 @@ def estimated_spend(shares, registry_doc):
     considered = sum(r["tokens"] for r in shares["by_model"])
     attributed = shares["totals"]["attributed_tokens"]
 
+    # Parity ratio: spend share ÷ token share, both over the same fixed window.
+    # Above 1, a vendor captures more value than volume. Taken from unrounded
+    # quantities so small vendors are not distorted by the 3-dp share rounding.
+    vendor_tokens = {v["key"]: v["tokens"] for v in shares["by_vendor"]}
+    denom = shares["totals"]["denominator"]
+
+    def parity(vendor, usd):
+        tok = vendor_tokens.get(vendor, 0)
+        if not (total and denom and tok):
+            return None
+        return (usd / total) / (tok / denom)
+
     return {
         "label": "Estimated routed spend (derived)",
         "total_usd": total,
         "by_model": rows[:30],
-        "by_vendor": [{"vendor": k, "estimated_usd": v, "share_pct": pct(v, total)}
+        "by_vendor": [{"vendor": k, "estimated_usd": v, "share_pct": pct(v, total),
+                       "token_share_pct": pct(vendor_tokens.get(k, 0), denom),
+                       "parity_ratio": parity(k, v)}
                       for k, v in sorted(by_vendor.items(), key=lambda kv: -kv[1])],
         "models_without_pricing": missing,
         "price_coverage": {
