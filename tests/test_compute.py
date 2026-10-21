@@ -698,6 +698,54 @@ def test_parity_ratio_none_without_tokens():
     assert all(v["parity_ratio"] is None for v in sp["by_vendor"]), sp["by_vendor"]
 
 
+# --- Verification fixes (2026-10-21, checked against openrouter.ai) ----------
+
+def test_customer_support_unknown_only_while_true():
+    """Regression for DEF-2026-10-21-001: the page asserted 'no customer support
+    tag exists' after OpenRouter added one. Emitted only while it is true."""
+    import compute
+    q = lambda ku: [u for u in ku if "customer support" in u["question"].lower()]
+    with_tag = {"classifications": [{"tag": "customer_support", "display_name": "Customer Support"}]}
+    without = {"classifications": [{"tag": "code", "display_name": "Code Generation"}]}
+    assert q(compute.known_unknowns(with_tag)) == [], "claims no tag while one exists"
+    assert len(q(compute.known_unknowns(without))) == 1
+    assert len(q(compute.known_unknowns(None))) == 1
+    assert not q(compute.KNOWN_UNKNOWNS), "the unconditional list must not carry the claim"
+
+
+def test_committed_known_unknowns_agree_with_the_task_feed():
+    live = ROOT / "data" / "computed.json"
+    if not live.exists():
+        return
+    d = json.loads(live.read_text(encoding="utf-8"))
+    cls = (d.get("task_segmentation") or {}).get("classifications") or []
+    has_tag = any("support" in (c["tag"] + c["display_name"]).lower() for c in cls)
+    claims_none = any("customer support" in u["question"].lower() for u in d["known_unknowns"])
+    assert not (has_tag and claims_none), "computed.json says no support tag while the feed has one"
+
+
+def test_public_traffic_only_is_disclosed():
+    """OpenRouter's Data API excludes private and zero-data-retention traffic."""
+    import compute
+    text = json.dumps(compute.KNOWN_UNKNOWNS).lower()
+    assert "public traffic only" in text and "zero-data-retention" in text
+    assert "public traffic only" in _index_html_text()
+
+
+def test_spend_assumptions_disclose_price_snapshot_and_caching():
+    def run(compute):
+        s = compute.token_shares(TOKENS_DOC)
+        a = " ".join(compute.estimated_spend(s, REGISTRY_DOC)["assumptions"]).lower()
+        assert "snapshot" in a and "promotion" in a, a
+        assert "caching" in a, a
+    with_fixture(run)
+
+
+def test_page_distinguishes_token_share_from_request_share():
+    html = _index_html_text()
+    assert "Token share vs request share" in html
+
+
 def test_page_prose_carries_no_hardcoded_figures():
     """Figures in the page's prose drift from the data on every refresh (the
     task paragraph claimed 27% / 72.5% while the data said 22.4% / 63.1%).

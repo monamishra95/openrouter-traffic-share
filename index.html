@@ -109,7 +109,7 @@
 
   <!-- Caveats render above every chart. AC-3. -->
   <div class="caveat">
-    <b>This is one gateway, not the market.</b> These figures describe traffic routed through OpenRouter. Most enterprise inference goes directly to Anthropic, OpenAI or Google Cloud and never appears here. OpenRouter states this themselves: the rankings <em>"describe traffic routed through OpenRouter, not the whole market and not usage on a model provider's own API."</em>
+    <b>This is one gateway, not the market.</b> These figures describe traffic routed through OpenRouter. Most enterprise inference goes directly to Anthropic, OpenAI or Google Cloud and never appears here. OpenRouter states this themselves: the rankings <em>"describe traffic routed through OpenRouter, not the whole market and not usage on a model provider's own API."</em> It is also public traffic only: private models, private endpoints and zero-data-retention requests are excluded from OpenRouter's datasets at the source.
   </div>
   <div class="caveat">
     <b>Tokens from different vendors are not directly comparable.</b> Each provider counts with its own tokenizer, so a token in one row is not the same unit as a token in another. Summing across vendors adds unlike quantities — which is what every "AI market share by tokens" figure silently does. Request share, in the first tab, is the more comparable measure.
@@ -208,7 +208,7 @@
         <b>This is not enterprise spend.</b> No public API publishes enterprise API spend. This figure is computed here by multiplying token volume by each model's published list price. It covers gateway-routed traffic only and uses list rates, which negotiated enterprise contracts sit below.
       </div>
       <div class="chart"><canvas id="c-spend"></canvas></div>
-      <div class="fx"><b>per model</b> = tokens × (prompt price + completion price) ÷ 2 &nbsp;·&nbsp; joined on <b>canonical_slug</b> &nbsp;·&nbsp; <span id="spend-coverage">price coverage not reported by this build</span> &nbsp;·&nbsp; list prices, not negotiated rates</div>
+      <div class="fx"><b>per model</b> = tokens × (prompt price + completion price) ÷ 2 &nbsp;·&nbsp; joined on <b>canonical_slug</b> &nbsp;·&nbsp; <span id="spend-coverage">price coverage not reported by this build</span> &nbsp;·&nbsp; list prices from one registry snapshot (promotions included, caching not modelled), not negotiated rates</div>
       <div id="spend-assume" class="src"></div>
       <div class="xt" id="x-c-spend"></div>
     </div>
@@ -772,7 +772,7 @@ const FORMULAS = [
   { fig: 'Estimated routed spend (per model)',
     f: 'model tokens × (prompt price + completion price) ÷ 2',
     src: 'rankings-daily × /api/v1/models',
-    note: 'Joined on canonical_slug, not id — the ranking endpoint emits dated permaslugs. Price coverage: {COVERAGE}.' },
+    note: 'Joined on canonical_slug, not id — the ranking endpoint emits dated permaslugs. Price coverage: {COVERAGE}. Prices are a single snapshot taken at fetch time and applied to the whole window, so an introductory discount in force that day is applied throughout. Caching is not modelled; OpenRouter\'s published weighted-average effective prices are lower for cache-heavy models.' },
   { fig: 'Spend share',
     f: 'vendor estimated USD ÷ total estimated USD',
     src: 'derived',
@@ -844,6 +844,8 @@ const DEFINITIONS = [
     d: 'Open = permissive licence (MIT, Apache-2.0) confirmed on the model\'s HuggingFace repo. Open-restricted = weights published under a bespoke licence carrying use restrictions. Proprietary = the vendor publishes no weights for that line (Anthropic entirely; Google\'s Gemini line, as distinct from Gemma; OpenAI apart from gpt-oss). Unknown means unestablished — never a guess, and never a stand-in for proprietary.' },
   { t: 'Why token counts are not comparable across vendors',
     d: 'Each provider counts with its own tokenizer, so summing tokens across vendors adds unlike units. This is OpenRouter\'s own caveat. Request share is offered alongside as the more comparable measure.' },
+  { t: 'Token share vs request share — two different leaderboards',
+    d: 'Vendor shares on this page are shares of tokens, from the rankings-daily dataset. OpenRouter\'s own Market Share chart on its rankings page counts requests instead. The two can rank vendors very differently: a vendor serving many short, cheap requests (classification, extraction) ranks far higher by requests than by tokens, and a vendor serving long agentic or coding sessions the reverse. Neither measures users or spend. Per-vendor request counts are not in the public datasets this page reads, so request share is not reproduced here — see openrouter.ai/rankings.' },
   { t: 'Unknown vs not classified',
     d: 'Unknown means a top model was examined and no licence could be established. Not classified means the traffic was never examined: models ranked below the classified set, and the "other" row, which carries no model identity. Neither is folded into proprietary or open.' },
   { t: 'What the tables under each chart contain',

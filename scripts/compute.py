@@ -419,6 +419,12 @@ def estimated_spend(shares, registry_doc):
             "Tokens multiplied by published list prices from /api/v1/models.",
             "Prompt and completion prices are blended 50/50; the true split is not exposed per model.",
             "List rates only — negotiated enterprise pricing is not public and is typically lower.",
+            "Prices are one snapshot of the model registry at fetch time, applied to the whole window. "
+            "A temporary promotion in force on that day is applied to every day, and earlier or later "
+            "price changes are not reflected; the registry does not flag promotional prices.",
+            "Prompt caching is not modelled. OpenRouter's own weighted-average effective prices sit "
+            "well below list for input tokens on cache-heavy models, so this estimate overstates what "
+            "was actually paid for those models.",
             "Covers OpenRouter-routed traffic only, which is a fraction of each vendor's total volume.",
             "This is NOT enterprise spend. It is an estimate of spend on gateway-routed traffic.",
         ],
@@ -547,8 +553,11 @@ KNOWN_UNKNOWNS = [
     {"question": "Enterprise API spend by vendor",
      "why": "No public endpoint exists. The spend figure here is derived from tokens and list "
             "prices, covers gateway traffic only, and is not a substitute."},
-    {"question": "Customer support as a use-case",
-     "why": "No corresponding tag exists in OpenRouter's app categories or task classifications."},
+    {"question": "Private and zero-data-retention traffic",
+     "why": "OpenRouter's public datasets contain public traffic only. Private models, private "
+            "endpoints and zero-data-retention requests are excluded at the source, so every share "
+            "here is a share of public traffic. Enterprise workloads are disproportionately likely "
+            "to be in the excluded part."},
     {"question": "Whether token counts are comparable between vendors",
      "why": "They are not. Each provider's own tokenizer produces the counts, so summing across "
             "vendors adds unlike units. Request share is offered as the more comparable measure."},
@@ -559,6 +568,25 @@ KNOWN_UNKNOWNS = [
             "its line drops for reasons unrelated to demand. Short-run movement can reflect "
             "ranking churn rather than usage."},
 ]
+
+
+# This entry was once a fixed statement ("no corresponding tag exists"); upstream
+# later added a customer_support task tag and the page went on asserting the
+# opposite (DEF-2026-10-21-001). It is now emitted only while it is true.
+CUSTOMER_SUPPORT_UNKNOWN = {
+    "question": "Customer support as a use-case",
+    "why": "No corresponding tag exists in OpenRouter's task classifications in this snapshot.",
+}
+
+
+def known_unknowns(tasks):
+    """KNOWN_UNKNOWNS, plus entries whose truth depends on the current feeds."""
+    out = list(KNOWN_UNKNOWNS)
+    tags = [f"{c.get('tag', '')} {c.get('display_name', '')}".lower()
+            for c in ((tasks or {}).get("classifications") or [])]
+    if not any("support" in t for t in tags):
+        out.append(CUSTOMER_SUPPORT_UNKNOWN)
+    return out
 
 
 def build(print_summary=False):
@@ -582,8 +610,10 @@ def build(print_summary=False):
         "open_weight": open_weight_share(shares, licences_doc, registry_doc) if licences_doc else None,
         "estimated_spend": estimated_spend(shares, registry_doc) if registry_doc else None,
         "task_segmentation": task_segmentation(tasks_doc),
-        "known_unknowns": KNOWN_UNKNOWNS,
+        "known_unknowns": None,              # filled below, from the task feed
+
     }
+    out["known_unknowns"] = known_unknowns(out["task_segmentation"])
     (DATA / "computed.json").write_text(json.dumps(out, indent=2))
     print(f"wrote data/computed.json")
 

@@ -1630,6 +1630,8 @@
       "Tokens multiplied by published list prices from /api/v1/models.",
       "Prompt and completion prices are blended 50/50; the true split is not exposed per model.",
       "List rates only \u2014 negotiated enterprise pricing is not public and is typically lower.",
+      "Prices are one snapshot of the model registry at fetch time, applied to the whole window. A temporary promotion in force on that day is applied to every day, and earlier or later price changes are not reflected; the registry does not flag promotional prices.",
+      "Prompt caching is not modelled. OpenRouter's own weighted-average effective prices sit well below list for input tokens on cache-heavy models, so this estimate overstates what was actually paid for those models.",
       "Covers OpenRouter-routed traffic only, which is a fraction of each vendor's total volume.",
       "This is NOT enterprise spend. It is an estimate of spend on gateway-routed traffic."
     ]
@@ -2696,8 +2698,8 @@
       "why": "No public endpoint exists. The spend figure here is derived from tokens and list prices, covers gateway traffic only, and is not a substitute."
     },
     {
-      "question": "Customer support as a use-case",
-      "why": "No corresponding tag exists in OpenRouter's app categories or task classifications."
+      "question": "Private and zero-data-retention traffic",
+      "why": "OpenRouter's public datasets contain public traffic only. Private models, private endpoints and zero-data-retention requests are excluded at the source, so every share here is a share of public traffic. Enterprise workloads are disproportionately likely to be in the excluded part."
     },
     {
       "question": "Whether token counts are comparable between vendors",
